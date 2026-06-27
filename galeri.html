@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Galeri | Ness Art</title>
+  <meta name="description" content="Ness Art tablo galerisi: akrilik boya ile hazırlanmış el yapımı orijinal tuvaller." />
+  <link rel="stylesheet" href="assets/css/styles.css" />
+  <link rel="icon" type="image/png" href="assets/img/favicon.png" />
+</head>
+<body>
+  <header class="site-header" data-header>
+    <a class="brand" href="index.html"><span class="brand-mark"><img src="assets/img/ness-logo.png" alt="Ness Art logosu"></span><span><strong>Ness Art</strong><small>el yapımı tuval çalışmaları</small></span></a>
+    <button class="nav-toggle" type="button" aria-label="Menüyü aç/kapat" data-nav-toggle><span></span><span></span><span></span></button>
+    <nav class="main-nav" data-nav>
+      <a href="index.html">Ana Sayfa</a><a href="galeri.html" class="active">Galeri</a><a href="fuarlar.html">Fuarlar</a><a href="ozel-siparis.html">Özel Sipariş</a><a href="hakkinda.html">Hakkında</a><a href="iletisim.html">İletişim</a><a href="admin.html" class="login-nav" aria-label="Kullanıcı girişi" title="Kullanıcı girişi"><span class="login-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M12 12.25a4.25 4.25 0 1 0 0-8.5 4.25 4.25 0 0 0 0 8.5Zm0 1.8c-4.15 0-7.35 2.14-7.35 4.9 0 .75.6 1.3 1.35 1.3h12c.75 0 1.35-.55 1.35-1.3 0-2.76-3.2-4.9-7.35-4.9Z"></path></svg></span></a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="page-hero">
+      <p class="eyebrow">Galeri</p>
+      <h1>El yapımı akrilik tuvaller</h1>
+      <p>Tabloları ve özel sipariş örneklerini konuya göre filtreleyebilir, detaylarını inceleyebilir ve satış platformlarındaki güncel durumuna gidebilirsin.</p>
+    </section>
+
+    <section class="section no-pad-top">
+      <div class="filter-bar" aria-label="Galeri filtreleri">
+        <button class="filter active" type="button" data-filter="all">Tümü</button>
+        <button class="filter" type="button" data-filter="doga">Doğa</button>
+        <button class="filter" type="button" data-filter="deniz">Deniz</button>
+        <button class="filter" type="button" data-filter="cicek">Çiçek</button>
+        <button class="filter" type="button" data-filter="ozel">Dizi/Film Özel Tasarım</button>
+        <button class="filter" type="button" data-filter="portre">Evcil Hayvan Portresi</button>
+        <button class="filter" type="button" data-filter="soyut">Soyut</button>
+        <button class="filter" type="button" data-filter="manzara">Manzara</button>
+        <button class="filter" type="button" data-filter="diger">Diğer</button>
+      </div>
+      <div class="art-grid full" data-gallery-grid></div>
+      <p class="gallery-note">Not: Fiyat, stok ve özel sipariş bilgileri satış platformlarında değişebilir. Özel tasarım örnekleri hazır satılık ürün değil; sipariş fikri göstermek için eklenmiştir.</p>
+    </section>
+  </main>
+
+  <dialog class="art-dialog" data-art-dialog>
+    <button class="dialog-close" type="button" data-close-dialog aria-label="Detayı kapat">×</button>
+    <div class="dialog-body" data-dialog-body></div>
+  </dialog>
+
+  <footer class="site-footer"><div><strong>Ness Art</strong><p>El yapımı akrilik tuval çalışmaları.</p></div><p>© <span data-year></span> Ness Art. Tüm hakları saklıdır.</p></footer>
+  <script src="assets/js/data.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+  <script src="assets/js/firebase-config.js"></script>
+  <script src="assets/js/main.js"></script>
+</body>
+</html>
