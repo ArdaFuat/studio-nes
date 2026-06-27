@@ -51,12 +51,12 @@ button { font: inherit; }
   top: 0;
   left: 0;
   right: 0;
-  height: 84px;
+  height: 96px;
   background: rgba(246, 240, 230, .78);
   border-bottom: 1px solid rgba(15, 46, 29, .08);
   z-index: -1;
 }
-.brand { display: inline-flex; align-items: center; gap: .8rem; }
+.brand { display: inline-flex; align-items: center; gap: .9rem; min-width: 0; }
 .brand-mark {
   display: grid;
   place-items: center;
@@ -74,6 +74,15 @@ button { font: inherit; }
   height: 100%;
   object-fit: cover;
   transform: scale(1.08);
+}
+.brand-copy {
+  display: grid;
+  gap: .12rem;
+  min-width: 0;
+}
+.brand-wordmark {
+  width: clamp(150px, 18vw, 228px);
+  height: auto;
 }
 .brand strong { display: block; font-size: 1rem; letter-spacing: .05em; text-transform: uppercase; }
 .brand small { display: block; color: var(--muted); margin-top: .1rem; }
@@ -549,6 +558,42 @@ summary { cursor: pointer; font-weight: 900; color: var(--forest-900); }
 }
 .site-footer strong { color: var(--forest-900); }
 .site-footer p { margin: .25rem 0 0; }
+.footer-brand {
+  display: grid;
+  gap: .5rem;
+}
+.footer-wordmark {
+  width: min(240px, 70vw);
+  height: auto;
+}
+.brand-showcase {
+  padding-top: 0;
+}
+.brand-showcase-card {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 1.3rem 1.4rem;
+  border-radius: 30px;
+  border: 1px solid rgba(15, 46, 29, .1);
+  background: rgba(255, 250, 241, .82);
+  box-shadow: 0 18px 42px rgba(7, 23, 15, .08);
+  display: grid;
+  justify-items: center;
+  gap: .8rem;
+  text-align: center;
+}
+.brand-showcase-wordmark {
+  width: min(440px, 100%);
+  height: auto;
+}
+.brand-showcase-card p {
+  margin: 0;
+  color: var(--muted);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  font-size: .8rem;
+}
 
 .reveal { opacity: 0; transform: translateY(18px); transition: opacity .65s ease, transform .65s ease; }
 .reveal.visible { opacity: 1; transform: translateY(0); }
@@ -587,6 +632,8 @@ summary { cursor: pointer; font-weight: 900; color: var(--forest-900); }
   .main-nav.open { opacity: 1; pointer-events: auto; transform: translateY(0); }
   .main-nav a { border-radius: 16px; }
   .brand small { display: none; }
+  .brand-wordmark { width: clamp(126px, 40vw, 170px); }
+  .brand-mark { width: 48px; height: 48px; flex-basis: 48px; }
   .hero { margin-top: .5rem; padding-bottom: 3rem; }
   .hero-copy h1, .page-hero h1, .about-copy h1 { font-size: clamp(2.5rem, 14vw, 4.2rem); }
   .section { padding: 3.5rem 1rem; }
