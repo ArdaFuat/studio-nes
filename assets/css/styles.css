@@ -39,10 +39,11 @@ button { font: inherit; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
-  max-width: var(--max);
+  gap: 1.35rem;
+  max-width: 1280px;
+  min-height: 108px;
   margin: 0 auto;
-  padding: 1rem 1.2rem;
+  padding: 1.25rem 1.4rem;
   backdrop-filter: blur(18px);
 }
 .site-header::before {
@@ -51,46 +52,55 @@ button { font: inherit; }
   top: 0;
   left: 0;
   right: 0;
-  height: 96px;
-  background: rgba(246, 240, 230, .78);
+  height: 118px;
+  background: rgba(246, 240, 230, .88);
   border-bottom: 1px solid rgba(15, 46, 29, .08);
+  box-shadow: 0 8px 30px rgba(7, 23, 15, .06);
   z-index: -1;
 }
-.brand { display: inline-flex; align-items: center; gap: .9rem; min-width: 0; }
+.brand { display: inline-flex; align-items: center; gap: 1.05rem; min-width: 0; padding: .35rem .2rem; }
 .brand-mark {
   display: grid;
   place-items: center;
-  width: 54px;
-  height: 54px;
-  flex: 0 0 54px;
+  width: 68px;
+  height: 68px;
+  flex: 0 0 68px;
   border-radius: 50%;
   overflow: hidden;
-  background: #f2e8f0;
-  border: 2px solid rgba(15, 46, 29, .12);
-  box-shadow: 0 12px 28px rgba(15, 46, 29, .22);
+  background: #f7f0e6;
+  border: 2px solid rgba(15, 46, 29, .10);
+  box-shadow: 0 14px 30px rgba(15, 46, 29, .14);
 }
 .brand-mark img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transform: scale(1.08);
+  transform: scale(1);
 }
 .brand-copy {
   display: grid;
-  gap: .12rem;
+  gap: .24rem;
   min-width: 0;
+  justify-items: center;
+  align-content: center;
 }
 .brand-wordmark {
-  width: clamp(150px, 18vw, 228px);
+  width: clamp(190px, 19vw, 285px);
   height: auto;
+  margin-inline: auto;
 }
 .brand strong { display: block; font-size: 1rem; letter-spacing: .05em; text-transform: uppercase; }
-.brand small { display: block; color: var(--muted); margin-top: .1rem; }
-.main-nav { display: flex; align-items: center; gap: .2rem; }
+.brand small { display: block; color: #8c978d; margin-top: 0; text-align: center; font-size: .95rem; }
+.brand-copy .brand-wordmark,
+.brand-copy small {
+  position: relative;
+  left: -6px;
+}
+.main-nav { display: flex; align-items: center; gap: .32rem; margin-left: auto; }
 .main-nav a {
-  padding: .75rem .9rem;
+  padding: .85rem 1rem;
   border-radius: 999px;
-  font-size: .94rem;
+  font-size: .98rem;
   color: var(--forest-800);
   transition: .2s ease;
 }
@@ -610,7 +620,7 @@ summary { cursor: pointer; font-weight: 900; color: var(--forest-900); }
 }
 
 @media (max-width: 760px) {
-  .site-header { padding: .85rem 1rem; }
+  .site-header { min-height: 86px; padding: .9rem 1rem; }
   .nav-toggle { display: block; }
   .main-nav {
     position: absolute;
@@ -632,8 +642,10 @@ summary { cursor: pointer; font-weight: 900; color: var(--forest-900); }
   .main-nav.open { opacity: 1; pointer-events: auto; transform: translateY(0); }
   .main-nav a { border-radius: 16px; }
   .brand small { display: none; }
-  .brand-wordmark { width: clamp(126px, 40vw, 170px); }
-  .brand-mark { width: 48px; height: 48px; flex-basis: 48px; }
+  .brand-wordmark { width: clamp(150px, 46vw, 210px); }
+  .brand-mark { width: 54px; height: 54px; flex-basis: 54px; }
+  .brand-copy { justify-items: start; }
+  .main-nav { top: calc(100% + .55rem); }
   .hero { margin-top: .5rem; padding-bottom: 3rem; }
   .hero-copy h1, .page-hero h1, .about-copy h1 { font-size: clamp(2.5rem, 14vw, 4.2rem); }
   .section { padding: 3.5rem 1rem; }
