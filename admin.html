@@ -1,214 +1,190 @@
-const SITE_LINKS = [
-  {
-    name: "Instagram",
-    handle: "@bynessart",
-    description: "Güncel işler, atölye paylaşımları ve duyurular.",
-    url: "https://www.instagram.com/bynessart?igsh=OWxyYWI5YWpseWE1",
-    type: "Sosyal medya"
-  },
-  {
-    name: "TikTok",
-    handle: "@artness_",
-    description: "Kısa video içerikleri ve üretim sürecinden kesitler.",
-    url: "https://www.tiktok.com/@artness_",
-    type: "Sosyal medya"
-  },
-  {
-    name: "Shopier",
-    handle: "nessbyk",
-    description: "Tablo ürün sayfaları, fiyatlar ve sipariş kontrolü.",
-    url: "https://www.shopier.com/nessbyk?utm_source=ig&utm_medium=social&utm_content=link_in_bio&utm_id=97760_v0_s00_e0_tv3",
-    type: "Satış"
-  },
-  {
-    name: "Gardrops",
-    handle: "nessbyk",
-    description: "Satış profili, özel sipariş örnekleri ve ürün yönlendirmeleri.",
-    url: "https://www.gardrops.com/nessbyk-u-15646955",
-    type: "Satış"
-  },
-  {
-    name: "Dolap",
-    handle: "nessbyk",
-    description: "Dolap satış profiline yönlendirme.",
-    url: "https://link.dolap.com/ukcevl",
-    type: "Satış"
-  }
-];
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kullanıcı Girişi | Ness Art</title>
+  <meta name="description" content="Ness Art kullanıcı girişi." />
+  <link rel="stylesheet" href="assets/css/styles.css" />
+  <link rel="icon" type="image/png" href="assets/img/favicon.png" />
+</head>
+<body class="admin-page">
+  <header class="site-header" data-header>
+    <a class="brand" href="index.html"><span class="brand-mark"><img src="assets/img/ness-logo.png" alt="Ness Art logosu"></span><span><strong>Ness Art</strong><small>kullanıcı girişi</small></span></a>
+    <button class="nav-toggle" type="button" aria-label="Menüyü aç/kapat" data-nav-toggle><span></span><span></span><span></span></button>
+    <nav class="main-nav" data-nav>
+      <a href="index.html">Ana Sayfa</a><a href="galeri.html">Galeri</a><a href="fuarlar.html">Fuarlar</a><a href="ozel-siparis.html">Özel Sipariş</a><a href="hakkinda.html">Hakkında</a><a href="iletisim.html">İletişim</a><a href="admin.html" class="login-nav active" aria-label="Kullanıcı girişi" title="Kullanıcı girişi"><span class="login-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M12 12.25a4.25 4.25 0 1 0 0-8.5 4.25 4.25 0 0 0 0 8.5Zm0 1.8c-4.15 0-7.35 2.14-7.35 4.9 0 .75.6 1.3 1.35 1.3h12c.75 0 1.35-.55 1.35-1.3 0-2.76-3.2-4.9-7.35-4.9Z"></path></svg></span></a>
+    </nav>
+  </header>
 
-const ARTWORKS = [
-  {
-    id: "kirlar",
-    title: "Kırlar",
-    category: "doga",
-    collection: "ready",
-    technique: "Akrilik boya",
-    size: "25×35 cm",
-    price: "1.100 TL",
-    status: "Satış durumunu kontrol et",
-    image: "https://cdn.shopier.app/pictures_large/nessbyk_a889e1f7d60fefc05cb7c6f9c76e1f5a.jpeg",
-    url: "https://www.shopier.com/nessbyk/47791488",
-    sourceLabel: "Shopier",
-    actionLabel: "Shopier’da Gör",
-    short: "Gün batımı tonlarıyla sıcak ve huzurlu bir kır manzarası.",
-    detail: "Kır manzarası, gün batımı renkleri ve yumuşak ışık hissiyle sakin bir atmosfer sunan orijinal akrilik çalışma. Yaşam alanı dekorasyonu veya özel hediye için uygun bir parça olarak kurgulanmıştır."
-  },
-  {
-    id: "orman",
-    title: "Orman",
-    category: "doga",
-    collection: "ready",
-    technique: "Akrilik boya",
-    size: "25×35 cm",
-    price: "1.000 TL",
-    status: "Satış durumunu kontrol et",
-    image: "https://cdn.shopier.app/pictures_large/nessbyk_d578454d1de377c66a921432d86c89e3.jpeg",
-    url: "https://www.shopier.com/nessbyk/47684234",
-    sourceLabel: "Shopier",
-    actionLabel: "Shopier’da Gör",
-    short: "Ağaçların arasından süzülen ışık, su kenarı ve geyikler.",
-    detail: "Orman atmosferi, su kenarı ve zarif geyik figürleriyle doğa hissini öne çıkaran akrilik çalışma. Koyu yeşil konseptli site kimliğinin de en güçlü görsel referanslarından biridir."
-  },
-  {
-    id: "yelkenli",
-    title: "Yelkenli",
-    category: "deniz",
-    collection: "ready",
-    technique: "Akrilik boya",
-    size: "25×35 cm",
-    price: "850 TL",
-    status: "Satış durumunu kontrol et",
-    image: "https://cdn.shopier.app/pictures_large/nessbyk_7a71f101d34ee8872d1e770e7a730d3a.jpeg",
-    url: "https://www.shopier.com/nessbyk/47684169",
-    sourceLabel: "Shopier",
-    actionLabel: "Shopier’da Gör",
-    short: "Ay ışığı altında denize açılan huzurlu bir yelkenli.",
-    detail: "Mavi tonların ve gece ışığının öne çıktığı deniz temalı akrilik tablo. Deniz tutkunları için sakin, mistik ve dekoratif bir atmosfer taşır."
-  },
-  {
-    id: "white-lilies",
-    title: "White Lilies",
-    category: "cicek",
-    collection: "ready",
-    technique: "Akrilik boya",
-    size: "25×35 cm",
-    price: "1.000 TL",
-    status: "Satış durumunu kontrol et",
-    image: "https://cdn.shopier.app/pictures_large/nessbyk_65d690a7ad2a4c0b952d82d37daa6ce7.jpeg",
-    url: "https://www.shopier.com/nessbyk/47673441",
-    sourceLabel: "Shopier",
-    actionLabel: "Shopier’da Gör",
-    short: "Beyaz zambakların sakin ve zarif çiçek kompozisyonu.",
-    detail: "Beyaz zambakları konu alan çiçek kompozisyonu. Canlı dokusu ve yumuşak arka planı ile sade ama dikkat çekici bir dekoratif etki verir."
-  },
-  {
-    id: "friends-custom-scene",
-    title: "Kişiye Özel Dizi/Film Sahnesi – Friends",
-    category: "ozel",
-    collection: "custom",
-    technique: "Akrilik boya",
-    size: "Kişiye özel ölçü",
-    price: "600 TL’den başlayan fiyatlar",
-    status: "Özel sipariş örneği",
-    image: "assets/img/custom-friends.jpg",
-    url: "https://www.gardrops.com/nessbyk-u-15646955",
-    sourceLabel: "Gardrops",
-    actionLabel: "Gardrops’ta Gör",
-    short: "Sevilen dizi/film sahnelerini tuval üzerine kişiye özel çalışma.",
-    detail: "Bu çalışma özel sipariş almak adına örnek olarak listelenmiştir; hazır satılık ürün değildir. Sevdiğiniz dizi, film sahnesi veya animasyon karesini tuval üzerine akrilik boya ile kişiye özel olarak çalıştırabilirsiniz. Sahne, boyut, çerçeve tercihi ve detay yoğunluğuna göre fiyat değişebilir."
-  },
-  {
-    id: "spiderman-custom-scene",
-    title: "Kişiye Özel Dizi/Film Sahnesi – Spider-Man",
-    category: "ozel",
-    collection: "custom",
-    technique: "Akrilik boya",
-    size: "Kişiye özel ölçü",
-    price: "600 TL’den başlayan fiyatlar",
-    status: "Özel sipariş örneği",
-    image: "assets/img/custom-spiderman.jpg",
-    url: "https://www.gardrops.com/nessbyk-u-15646955",
-    sourceLabel: "Gardrops",
-    actionLabel: "Gardrops’ta Gör",
-    short: "Animasyon ve film sahneleri için kişiye özel tuval seçeneği.",
-    detail: "Bu ilan özel sipariş fikrini göstermek için örnek olarak hazırlanmıştır; satılık hazır ürün değildir. İstediğiniz sahne, kompozisyon, boyut ve renk yoğunluğuna göre akrilik tuval çalışması yapılabilir. Detay seviyesi arttıkça hazırlık süresi ve fiyat değişebilir."
-  },
-  {
-    id: "pet-portrait-custom",
-    title: "Kişiye Özel Evcil Hayvan Portresi",
-    category: "portre",
-    collection: "custom",
-    technique: "Akrilik boya",
-    size: "13×13 cm örnek çalışma",
-    price: "700 TL’den başlayan fiyatlar",
-    status: "Özel sipariş örneği",
-    image: "assets/img/custom-pet-portrait.jpg",
-    url: "https://www.gardrops.com/nessbyk-u-15646955",
-    sourceLabel: "Gardrops",
-    actionLabel: "Gardrops’ta Gör",
-    short: "Evcil hayvan fotoğrafından kişiye özel akrilik tuval portre.",
-    detail: "Görseldeki çalışmalar örnektir ve hazır satılık değildir. Evcil hayvanınızın fotoğrafını göndererek tamamen kişiye özel akrilik tuval portre siparişi verebilirsiniz. Fiyat; tuval boyutu, arka plan, detay yoğunluğu ve istenen kompozisyona göre değişebilir. Görseldeki örnek tuvaller 13×13 cm ölçüsündedir."
-  }
-];
+  <main>
+    <section class="section no-pad-top admin-shell">
+      <div class="admin-notice info" data-admin-notice hidden></div>
 
-const HERO_HOME_SLIDES = [
-  {
-    artId: "white-lilies",
-    image: "assets/img/white_lilies.jpeg"
-  },
-  {
-    artId: "orman",
-    image: "assets/img/orman.jpeg"
-  },
-  {
-    artId: "kirlar",
-    image: "assets/img/kirlar.jpeg"
-  }
-];
+      <div class="admin-login-card" data-login-panel>
+        <div class="login-emblem" aria-hidden="true">
+          <img src="assets/img/ness-logo.png" alt="">
+        </div>
+        <h2>Kullanıcı girişi</h2>
+        <form data-login-form class="admin-form compact">
+          <label>
+            E-posta
+            <input id="adminEmail" type="email" placeholder="ruya@example.com" autocomplete="email" required>
+          </label>
+          <label>
+            Şifre
+            <input id="adminPassword" type="password" placeholder="••••••••" autocomplete="current-password" required>
+          </label>
+          <button class="btn primary" type="submit" data-login-submit>Giriş Yap</button>
+          <p class="login-status" data-login-status hidden></p>
+        </form>
+      </div>
 
-const ARTWORK_CATEGORIES = [
-  { value: "doga", label: "Doğa" },
-  { value: "deniz", label: "Deniz" },
-  { value: "cicek", label: "Çiçek" },
-  { value: "ozel", label: "Dizi/Film Özel Tasarım" },
-  { value: "portre", label: "Evcil Hayvan Portresi" },
-  { value: "soyut", label: "Soyut" },
-  { value: "manzara", label: "Manzara" },
-  { value: "diger", label: "Diğer" }
-];
+      <div class="admin-panel" data-admin-panel hidden>
+        <div class="admin-toolbar">
+          <div>
+            <span>Giriş yapan</span>
+            <strong data-admin-email>-</strong>
+          </div>
+          <div class="admin-toolbar-actions">
+            <a class="btn ghost" href="galeri.html" target="_blank" rel="noopener">Galeriyi Önizle</a>
+            <button class="btn ghost" type="button" data-new-product>Yeni Ürün</button>
+            <button class="btn ghost" type="button" data-seed-defaults>İlk Ürünleri Aktar</button>
+            <button class="btn ghost" type="button" data-export-json>Yedek İndir</button>
+            <label class="btn ghost file-btn">
+              Yedekten Yükle
+              <input type="file" accept="application/json" data-import-json hidden>
+            </label>
+            <button class="btn primary" type="button" data-logout>Çıkış</button>
+          </div>
+        </div>
 
-const ARTWORK_STATUSES = [
-  "Satılık",
-  "Satıldı",
-  "Rezerve",
-  "Satışta değil",
-  "Özel sipariş örneği",
-  "Fiyat sorunuz",
-  "Yakında"
-];
+        <div class="admin-grid">
+          <form class="admin-form admin-card" data-art-form>
+            <div class="admin-section-title">
+              <h2 data-form-title>Yeni ürün ekle</h2>
+              <p>Ürün bilgilerini doldurup kaydedebilirsin.</p>
+            </div>
 
-const ARTWORK_TECHNIQUES = [
-  "Akrilik boya",
-  "Yağlı boya",
-  "Yağlı pastel boya",
-  "Karışık teknik",
-  "Sulu boya",
-  "Karakalem",
-  "Dijital çalışma",
-  "Diğer"
-];
+            <label>
+              Ürün adı
+              <input id="title" type="text" placeholder="Örn: White Lilies" required>
+            </label>
 
-const ARTWORK_COLLECTIONS = [
-  { value: "ready", label: "Hazır / satılık ürün" },
-  { value: "custom", label: "Özel sipariş örneği" },
-  { value: "archive", label: "Arşiv / sadece galeri" }
-];
+            <div class="two-col">
+              <label>
+                Kategori
+                <select id="category" required></select>
+              </label>
+              <label>
+                Ürün tipi
+                <select id="collection" required></select>
+              </label>
+            </div>
 
-const SALES_PLATFORMS = [
-  { value: "", label: "Link yok", sourceLabel: "", actionLabel: "" },
-  { value: "Shopier", label: "Shopier", sourceLabel: "Shopier", actionLabel: "Shopier’da Gör" },
-  { value: "Shopify", label: "Shopify", sourceLabel: "Shopify", actionLabel: "Shopify’da Gör" },
-  { value: "Gardrops", label: "Gardrops", sourceLabel: "Gardrops", actionLabel: "Gardrops’ta Gör" },
-  { value: "Dolap", label: "Dolap", sourceLabel: "Dolap", actionLabel: "Dolap’ta Gör" },
-  { value: "Instagram", label: "Instagram", sourceLabel: "Instagram", actionLabel: "Instagram’da Gör" }
-];
+            <div class="two-col">
+              <label>
+                Teknik
+                <select id="technique" required></select>
+              </label>
+              <label>
+                Teknik farklıysa yaz
+                <input id="techniqueCustom" type="text" placeholder="Örn: Guaj + akrilik">
+              </label>
+            </div>
+
+            <div class="three-col">
+              <label>
+                En
+                <input id="width" type="number" min="0" step="0.1" placeholder="25">
+              </label>
+              <label>
+                Boy
+                <input id="height" type="number" min="0" step="0.1" placeholder="35">
+              </label>
+              <label>
+                Boyut yazısı
+                <input id="size" type="text" placeholder="Boşsa 25×35 cm olur">
+              </label>
+            </div>
+
+            <div class="two-col">
+              <label>
+                Fiyat
+                <input id="price" type="text" placeholder="1.100 TL / 700 TL’den başlayan fiyatlar">
+              </label>
+              <label>
+                Durum rozeti
+                <select id="status" required></select>
+              </label>
+            </div>
+
+            <div class="two-col">
+              <label>
+                Satış platformu
+                <select id="platform"></select>
+              </label>
+              <label>
+                Satış linki
+                <input id="url" type="url" placeholder="Shopier / Gardrops / Dolap linki">
+              </label>
+            </div>
+
+            <div class="upload-box image-upload-box">
+              <label>
+                Bilgisayardan görsel seç
+                <input id="imageFile" type="file" accept="image/*">
+                <small class="field-hint">Storage yok, ücret yok. Görsel otomatik küçültülüp ürün kaydına eklenir.</small>
+              </label>
+            </div>
+
+            <label>
+              Veya görsel URL / yol
+              <input id="image" type="text" placeholder="assets/img/ornek.jpg veya direkt https://...jpg">
+              <small class="field-hint">Google Drive, Instagram, Pinterest sayfa linkleri genelde çalışmaz. Direkt .jpg / .png / .webp linki gerekir.</small>
+            </label>
+            <img id="image-preview" class="image-preview" src="assets/img/ness-logo.png" alt="Görsel önizleme">
+
+            <label>
+              Kart açıklaması
+              <textarea id="short" rows="3" placeholder="Kart üzerinde görünecek kısa açıklama" required></textarea>
+            </label>
+
+            <label>
+              Detay açıklaması
+              <textarea id="detail" rows="6" placeholder="Detay penceresinde görünecek uzun açıklama" required></textarea>
+            </label>
+
+            <label class="check-row">
+              <input id="visible" type="checkbox" checked>
+              Galeride göster
+            </label>
+
+            <button class="btn primary" type="submit" data-submit-label>Ürünü Kaydet</button>
+          </form>
+
+          <aside class="admin-card product-manager">
+            <div class="admin-section-title row-title">
+              <div>
+                <h2>Mevcut ürünler</h2>
+                <p>Sıra butonları galerideki dizilimi değiştirir.</p>
+              </div>
+              <strong data-product-count>0 ürün</strong>
+            </div>
+            <div class="product-list" data-product-list></div>
+          </aside>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer"><div><strong>Ness Art</strong><p>El yapımı akrilik tuval çalışmaları.</p></div><p>© <span data-year></span> Ness Art. Tüm hakları saklıdır.</p></footer>
+  <script src="assets/js/data.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+  <script src="assets/js/firebase-config.js"></script>
+  <script src="assets/js/main.js"></script>
+  <script src="assets/js/admin.js"></script>
+</body>
+</html>
