@@ -1102,9 +1102,9 @@ summary { cursor: pointer; font-weight: 900; color: var(--forest-900); }
 
   body.home-page .hero-slide-copy {
     display: block;
-    left: .75rem;
+    left: .78rem;
     right: 8.55rem;
-    bottom: 1.55rem;
+    bottom: 1.26rem;
     z-index: 2;
     color: var(--cream);
   }
@@ -1149,13 +1149,13 @@ summary { cursor: pointer; font-weight: 900; color: var(--forest-900); }
   }
 
   body.home-page .top-card {
-    top: .72rem;
-    left: .72rem;
+    top: 1.02rem;
+    left: .78rem;
   }
 
   body.home-page .bottom-card {
-    right: .72rem;
-    bottom: .74rem;
+    right: .78rem;
+    bottom: 1.18rem;
     max-width: 122px;
     padding: .46rem .56rem;
   }
@@ -1166,7 +1166,7 @@ summary { cursor: pointer; font-weight: 900; color: var(--forest-900); }
   }
 
   body.home-page .hero-slider-dots {
-    bottom: .42rem;
+    bottom: .88rem;
     gap: .32rem;
     z-index: 4;
   }
@@ -1213,10 +1213,15 @@ summary { cursor: pointer; font-weight: 900; color: var(--forest-900); }
     font-size: .8rem;
   }
 
+  body.home-page .top-card {
+    top: .92rem;
+    left: .62rem;
+  }
+
   body.home-page .bottom-card {
     max-width: 112px;
     right: .58rem;
-    bottom: .66rem;
+    bottom: 1.02rem;
   }
 
   body.home-page .bottom-card strong {
@@ -1226,7 +1231,7 @@ summary { cursor: pointer; font-weight: 900; color: var(--forest-900); }
   body.home-page .hero-slide-copy {
     left: .62rem;
     right: 7.65rem;
-    bottom: 1.4rem;
+    bottom: 1.18rem;
   }
 
   body.home-page .hero-slide-tag {
