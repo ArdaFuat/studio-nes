@@ -1030,3 +1030,211 @@ summary { cursor: pointer; font-weight: 900; color: var(--forest-900); }
     height: 34px;
   }
 }
+
+/* Final mobile home hero polish: keep all hero text visible and prevent slider labels/dots from overlapping. */
+@media (max-width: 760px) {
+  body.home-page .hero {
+    margin-top: .15rem;
+    padding-top: .35rem;
+    padding-bottom: 3.2rem;
+    gap: 1.65rem;
+  }
+
+  body.home-page .hero-copy {
+    max-width: 100%;
+    overflow: visible;
+  }
+
+  body.home-page .hero-copy .eyebrow {
+    font-size: .58rem;
+    letter-spacing: .105em;
+    line-height: 1.35;
+    gap: .38rem;
+  }
+
+  body.home-page .hero-copy .eyebrow::before {
+    width: 24px;
+  }
+
+  body.home-page .hero-copy h1 {
+    font-size: clamp(2.05rem, 10.4vw, 3.05rem);
+    line-height: .99;
+    letter-spacing: -.04em;
+    margin: .35rem 0 .65rem;
+  }
+
+  body.home-page .lead {
+    font-size: clamp(.98rem, 4.25vw, 1.08rem);
+    line-height: 1.58;
+    margin: 0;
+  }
+
+  body.home-page .hero-actions {
+    margin-top: 1.08rem;
+    gap: .62rem;
+  }
+
+  body.home-page .hero-actions .btn {
+    min-height: 45px;
+    padding: .78rem 1rem;
+    font-size: .94rem;
+  }
+
+  body.home-page .hero-art {
+    padding: .55rem;
+    border-radius: 29px;
+  }
+
+  body.home-page .hero-slider-viewport {
+    border-width: 6px;
+    border-radius: 24px;
+  }
+
+  body.home-page .hero-slide img,
+  body.home-page .hero-slide::after {
+    border-radius: 18px;
+  }
+
+  body.home-page .hero-slide::after {
+    display: block;
+    background: linear-gradient(180deg, transparent 54%, rgba(7, 23, 15, .58));
+  }
+
+  body.home-page .hero-slide-copy {
+    display: block;
+    left: .75rem;
+    right: 8.55rem;
+    bottom: 1.55rem;
+    z-index: 2;
+    color: var(--cream);
+  }
+
+  body.home-page .hero-slide-tag {
+    max-width: 100%;
+    padding: .24rem .42rem;
+    font-size: .48rem;
+    letter-spacing: .09em;
+    line-height: 1.15;
+    white-space: nowrap;
+  }
+
+  body.home-page .hero-slide-copy h3 {
+    margin: .18rem 0 0;
+    font-size: clamp(.95rem, 4.6vw, 1.25rem);
+    line-height: .96;
+    letter-spacing: -.025em;
+  }
+
+  body.home-page .hero-slide-copy p,
+  body.home-page .hero-slide-link {
+    display: none;
+  }
+
+  body.home-page .floating-card {
+    max-width: 150px;
+    padding: .58rem .68rem;
+    border-radius: 15px;
+  }
+
+  body.home-page .floating-card span {
+    font-size: .54rem;
+    letter-spacing: .105em;
+    line-height: 1.2;
+  }
+
+  body.home-page .floating-card strong {
+    margin-top: .15rem;
+    font-size: .9rem;
+    line-height: 1.08;
+  }
+
+  body.home-page .top-card {
+    top: .72rem;
+    left: .72rem;
+  }
+
+  body.home-page .bottom-card {
+    right: .72rem;
+    bottom: .74rem;
+    max-width: 122px;
+    padding: .46rem .56rem;
+  }
+
+  body.home-page .bottom-card strong {
+    font-size: .72rem;
+    line-height: 1.05;
+  }
+
+  body.home-page .hero-slider-dots {
+    bottom: .42rem;
+    gap: .32rem;
+    z-index: 4;
+  }
+
+  body.home-page .hero-slider-dot {
+    width: 7px;
+    height: 7px;
+  }
+
+  body.home-page .hero-slider-dot.active {
+    width: 22px;
+  }
+
+  body.home-page .hero-slider-arrow {
+    width: 36px;
+    height: 36px;
+    font-size: 1.45rem;
+  }
+}
+
+@media (max-width: 380px) {
+  body.home-page .hero-copy h1 {
+    font-size: clamp(1.88rem, 10vw, 2.45rem);
+    line-height: 1;
+  }
+
+  body.home-page .lead {
+    font-size: .95rem;
+    line-height: 1.52;
+  }
+
+  body.home-page .hero-actions .btn {
+    min-height: 42px;
+    padding: .72rem .82rem;
+    font-size: .88rem;
+  }
+
+  body.home-page .floating-card {
+    max-width: 132px;
+    padding: .48rem .55rem;
+  }
+
+  body.home-page .floating-card strong {
+    font-size: .8rem;
+  }
+
+  body.home-page .bottom-card {
+    max-width: 112px;
+    right: .58rem;
+    bottom: .66rem;
+  }
+
+  body.home-page .bottom-card strong {
+    font-size: .66rem;
+  }
+
+  body.home-page .hero-slide-copy {
+    left: .62rem;
+    right: 7.65rem;
+    bottom: 1.4rem;
+  }
+
+  body.home-page .hero-slide-tag {
+    font-size: .43rem;
+    padding: .2rem .34rem;
+  }
+
+  body.home-page .hero-slide-copy h3 {
+    font-size: .95rem;
+  }
+}
