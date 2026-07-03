@@ -1046,25 +1046,25 @@ summary { cursor: pointer; font-weight: 900; color: var(--forest-900); }
   }
 
   body.home-page .hero-copy .eyebrow {
-    font-size: .58rem;
-    letter-spacing: .105em;
+    font-size: .7rem;
+    letter-spacing: .115em;
     line-height: 1.35;
-    gap: .38rem;
+    gap: .42rem;
   }
 
   body.home-page .hero-copy .eyebrow::before {
-    width: 24px;
+    width: 32px;
   }
 
   body.home-page .hero-copy h1 {
-    font-size: clamp(2.05rem, 10.4vw, 3.05rem);
-    line-height: .99;
-    letter-spacing: -.04em;
-    margin: .35rem 0 .65rem;
+    font-size: clamp(2.35rem, 11.6vw, 3.45rem);
+    line-height: .98;
+    letter-spacing: -.045em;
+    margin: .42rem 0 .72rem;
   }
 
   body.home-page .lead {
-    font-size: clamp(.98rem, 4.25vw, 1.08rem);
+    font-size: clamp(1.08rem, 4.75vw, 1.2rem);
     line-height: 1.58;
     margin: 0;
   }
@@ -1189,13 +1189,13 @@ summary { cursor: pointer; font-weight: 900; color: var(--forest-900); }
 
 @media (max-width: 380px) {
   body.home-page .hero-copy h1 {
-    font-size: clamp(1.88rem, 10vw, 2.45rem);
-    line-height: 1;
+    font-size: clamp(2.05rem, 10.8vw, 2.7rem);
+    line-height: .99;
   }
 
   body.home-page .lead {
-    font-size: .95rem;
-    line-height: 1.52;
+    font-size: 1.02rem;
+    line-height: 1.54;
   }
 
   body.home-page .hero-actions .btn {
