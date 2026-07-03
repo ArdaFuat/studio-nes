@@ -686,6 +686,57 @@ summary { cursor: pointer; font-weight: 900; color: var(--forest-900); }
   .top-card { left: .7rem; }
   .bottom-card { right: .7rem; }
   .site-footer { flex-direction: column; }
+
+  /* Ana sayfa mobil düzeltmesi: yapışkan header ve hero üst üste binmesin */
+  body.home-page .site-header {
+    position: relative;
+    top: auto;
+  }
+
+  body.home-page .hero {
+    margin-top: .35rem;
+    padding-top: 1.15rem;
+    gap: 2.1rem;
+  }
+
+  body.home-page .hero-actions {
+    margin-top: 1.35rem;
+  }
+
+  body.home-page .hero-slide-copy {
+    display: none;
+  }
+
+  body.home-page .hero-slide::after {
+    display: none;
+  }
+
+  body.home-page .floating-card {
+    max-width: 185px;
+    padding: .78rem .9rem;
+    border-radius: 17px;
+  }
+
+  body.home-page .floating-card span {
+    font-size: .66rem;
+    letter-spacing: .11em;
+  }
+
+  body.home-page .floating-card strong {
+    font-size: 1rem;
+    line-height: 1.15;
+  }
+
+  body.home-page .top-card {
+    top: 1rem;
+    left: .85rem;
+  }
+
+  body.home-page .bottom-card {
+    right: .85rem;
+    bottom: 1rem;
+  }
+
 }
 
 
@@ -960,5 +1011,22 @@ summary { cursor: pointer; font-weight: 900; color: var(--forest-900); }
   .page-hero h1 {
     font-size: clamp(1.85rem, 9.6vw, 2.55rem);
     letter-spacing: -.025em;
+  }
+}
+
+
+@media (max-width: 380px) {
+  body.home-page .floating-card {
+    max-width: 160px;
+    padding: .68rem .75rem;
+  }
+
+  body.home-page .floating-card strong {
+    font-size: .92rem;
+  }
+
+  body.home-page .hero-slider-arrow {
+    width: 34px;
+    height: 34px;
   }
 }
