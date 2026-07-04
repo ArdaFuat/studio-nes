@@ -1347,6 +1347,7 @@ summary { cursor: pointer; font-weight: 900; color: var(--forest-900); }
   color: var(--forest-950);
   font-weight: 900;
 }
+.repeat-head-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .4rem; }
 .repeat-head button,
 .fair-list button {
   border: 1px solid rgba(30, 74, 52, .18);
@@ -1356,6 +1357,7 @@ summary { cursor: pointer; font-weight: 900; color: var(--forest-900); }
   cursor: pointer;
   font-weight: 900;
 }
+.repeat-head button:disabled { opacity: .38; cursor: not-allowed; }
 .repeat-head button.danger { color: #782b22; border-color: rgba(120, 43, 34, .24); }
 .id-hint { color: var(--forest-600) !important; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
 .compact-checks { align-items: center; }

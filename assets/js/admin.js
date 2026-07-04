@@ -654,7 +654,14 @@
       const items = Array.isArray(pathGet(siteContent, path, [])) ? pathGet(siteContent, path, []) : [];
       box.innerHTML = items.map((item, index) => `
         <article class="repeat-card" data-repeat-path="${escapeHtml(path)}" data-repeat-index="${index}">
-          <div class="repeat-head"><strong>${escapeHtml(item.title || item.label || item.question || `Satır ${index + 1}`)}</strong><button class="danger" type="button" data-remove-repeat="${escapeHtml(path)}" data-index="${index}">Sil</button></div>
+          <div class="repeat-head">
+            <strong>${escapeHtml(item.title || item.label || item.question || `Satır ${index + 1}`)}</strong>
+            <div class="repeat-head-actions">
+              <button type="button" data-move-repeat="${escapeHtml(path)}" data-index="${index}" data-direction="-1" ${index === 0 ? 'disabled' : ''}>Yukarı</button>
+              <button type="button" data-move-repeat="${escapeHtml(path)}" data-index="${index}" data-direction="1" ${index === items.length - 1 ? 'disabled' : ''}>Aşağı</button>
+              <button class="danger" type="button" data-remove-repeat="${escapeHtml(path)}" data-index="${index}">Sil</button>
+            </div>
+          </div>
           <div class="content-field-grid">
             ${config.fields.map(([key, label, type = 'text']) => `
               <label>${escapeHtml(label)}
@@ -1108,6 +1115,25 @@
         renderPrimitiveContentFields();
         return;
       }
+      const moveButton = event.target.closest('[data-move-repeat]');
+      if (moveButton) {
+        siteContent = readContentForm();
+        const path = moveButton.dataset.moveRepeat;
+        const index = Number(moveButton.dataset.index);
+        const direction = Number(moveButton.dataset.direction);
+        const current = Array.isArray(pathGet(siteContent, path, [])) ? [...pathGet(siteContent, path, [])] : [];
+        const nextIndex = index + direction;
+        if (index >= 0 && nextIndex >= 0 && nextIndex < current.length) {
+          [current[index], current[nextIndex]] = [current[nextIndex], current[index]];
+          pathSet(siteContent, path, current);
+          renderPrimitiveContentFields();
+          if (path === 'gallery.filters') {
+            refreshCategorySelect();
+            renderList();
+          }
+        }
+        return;
+      }
       const removeButton = event.target.closest('[data-remove-repeat]');
       if (removeButton) {
         siteContent = readContentForm();
@@ -1117,6 +1143,10 @@
         current.splice(index, 1);
         pathSet(siteContent, path, current);
         renderPrimitiveContentFields();
+        if (path === 'gallery.filters') {
+          refreshCategorySelect();
+          renderList();
+        }
       }
     });
 
