@@ -122,30 +122,43 @@
 
   const isAllowedEmail = (email) => getAdminEmails().includes(String(email || '').trim().toLowerCase());
   const getPlatform = (value) => (SALES_PLATFORMS || []).find((item) => item.value === value) || SALES_PLATFORMS[0];
-  const normalizeCategoryOptions = (items = []) => {
+  const categoryKey = (value = '') => slugify(String(value || '')).replace(/-/g, '');
+
+  const normalizeCategoryOptions = (items = [], options = {}) => {
+    const includeAll = Boolean(options.includeAll);
     const seen = new Set();
     return (Array.isArray(items) ? items : [])
       .map((item) => ({
         value: String(typeof item === 'string' ? item : (item.value || '')).trim(),
         label: String(typeof item === 'string' ? item : (item.label || item.value || '')).trim()
       }))
-      .filter((item) => item.value && item.value !== 'all')
+      .filter((item) => item.value && (includeAll || item.value !== 'all'))
       .filter((item) => {
-        if (seen.has(item.value)) return false;
-        seen.add(item.value);
+        const key = item.value === 'all' ? 'all' : (categoryKey(item.value) || categoryKey(item.label));
+        if (!key || seen.has(key)) return false;
+        seen.add(key);
         return true;
       });
   };
+
+  const cleanGalleryFilters = (items = []) => {
+    const cleaned = normalizeCategoryOptions(items, { includeAll: true });
+    if (!cleaned.some((item) => item.value === 'all')) cleaned.unshift({ value: 'all', label: 'Tümü' });
+    return cleaned;
+  };
+
+  const getSavedGalleryFilters = () => {
+    const saved = Array.isArray(siteContent?.gallery?.filters) ? cleanGalleryFilters(siteContent.gallery.filters) : [];
+    if (saved.length) return saved;
+    return cleanGalleryFilters([{ value: 'all', label: 'Tümü' }, ...(typeof ARTWORK_CATEGORIES !== 'undefined' ? ARTWORK_CATEGORIES : [])]);
+  };
+
   const getGalleryCategoryOptions = (extraValue = '') => {
-    const merged = [];
-    const pushUnique = (item) => {
-      if (!item?.value || item.value === 'all' || merged.some((entry) => entry.value === item.value)) return;
-      merged.push(item);
-    };
-    normalizeCategoryOptions(siteContent?.gallery?.filters || []).forEach(pushUnique);
-    normalizeCategoryOptions(typeof ARTWORK_CATEGORIES !== 'undefined' ? ARTWORK_CATEGORIES : []).forEach(pushUnique);
+    const merged = normalizeCategoryOptions(getSavedGalleryFilters());
     const extra = String(extraValue || '').trim();
-    if (extra && !merged.some((item) => item.value === extra)) merged.push({ value: extra, label: extra });
+    if (extra && extra !== 'all' && !merged.some((item) => item.value === extra || categoryKey(item.value) === categoryKey(extra))) {
+      merged.push({ value: extra, label: extra });
+    }
     return merged;
   };
   const refreshCategorySelect = (selected = '') => {
@@ -651,7 +664,9 @@
     Object.entries(repeatConfig).forEach(([path, config]) => {
       const box = $(`[data-content-repeat="${path}"]`);
       if (!box) return;
-      const items = Array.isArray(pathGet(siteContent, path, [])) ? pathGet(siteContent, path, []) : [];
+      const rawItems = Array.isArray(pathGet(siteContent, path, [])) ? pathGet(siteContent, path, []) : [];
+      const items = path === 'gallery.filters' ? cleanGalleryFilters(rawItems) : rawItems;
+      if (path === 'gallery.filters') pathSet(siteContent, path, items);
       box.innerHTML = items.map((item, index) => `
         <article class="repeat-card" data-repeat-path="${escapeHtml(path)}" data-repeat-index="${index}">
           <div class="repeat-head">
@@ -683,14 +698,16 @@
         card.querySelectorAll('[data-repeat-field]').forEach((input) => { item[input.dataset.repeatField] = input.value.trim(); });
         return item;
       }).filter((item) => Object.values(item).some(Boolean));
-      pathSet(next, path, items);
+      pathSet(next, path, path === 'gallery.filters' ? cleanGalleryFilters(items) : items);
     });
     return next;
   };
 
   const saveContent = async (content) => {
+    const cleanedContent = clone(content || {});
+    if (cleanedContent.gallery) cleanedContent.gallery.filters = cleanGalleryFilters(cleanedContent.gallery.filters || []);
     const payload = {
-      ...content,
+      ...cleanedContent,
       updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
       updatedBy: currentUser?.email || ''
     };
@@ -902,6 +919,7 @@
       .onSnapshot((doc) => {
         const selectedCategory = $('#category')?.value || editingSnapshot?.category || 'doga';
         siteContent = deepMerge(DEFAULT_SITE_CONTENT || {}, doc.exists ? doc.data() : {});
+        if (siteContent.gallery) siteContent.gallery.filters = cleanGalleryFilters(siteContent.gallery.filters || []);
         renderPrimitiveContentFields();
         refreshCategorySelect(selectedCategory);
         renderLinks();

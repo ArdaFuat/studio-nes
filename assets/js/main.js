@@ -12,7 +12,7 @@
   let sliderCleanup = null;
   let revealObserver = null;
   let fairLightboxState = { images: [], index: 0, title: '' };
-  const PUBLIC_CACHE_KEY = 'studio-nes-public-cache-v5';
+  const PUBLIC_CACHE_KEY = 'studio-nes-public-cache-v6-cat-dedupe';
   let hasPaintedOnce = false;
   let lastRenderSignature = '';
 
@@ -150,6 +150,27 @@
     .split('\n')
     .map((item) => item.trim())
     .filter(Boolean);
+
+
+  const categoryKey = (value = '') => slugify(String(value || '')).replace(/-/g, '');
+
+  const normalizeGalleryFilters = (items = []) => {
+    const seen = new Set();
+    const cleaned = (Array.isArray(items) ? items : [])
+      .map((item) => ({
+        value: String(typeof item === 'string' ? item : (item.value || '')).trim(),
+        label: String(typeof item === 'string' ? item : (item.label || item.value || '')).trim()
+      }))
+      .filter((item) => item.value)
+      .filter((item) => {
+        const key = item.value === 'all' ? 'all' : (categoryKey(item.value) || categoryKey(item.label));
+        if (!key || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    if (!cleaned.some((item) => item.value === 'all')) cleaned.unshift({ value: 'all', label: 'Tümü' });
+    return cleaned;
+  };
 
   const isFirebaseConfigured = () => {
     try {
@@ -546,9 +567,10 @@
   const renderGalleryFilters = () => {
     const bar = document.querySelector('[data-gallery-filters]');
     if (!bar) return;
-    const filters = Array.isArray(siteContent.gallery?.filters) && siteContent.gallery.filters.length
+    const rawFilters = Array.isArray(siteContent.gallery?.filters) && siteContent.gallery.filters.length
       ? siteContent.gallery.filters
       : [{ value: 'all', label: 'Tümü' }, ...(typeof ARTWORK_CATEGORIES !== 'undefined' ? ARTWORK_CATEGORIES : [])];
+    const filters = normalizeGalleryFilters(rawFilters);
     if (!filters.some((filter) => filter.value === activeFilter)) activeFilter = 'all';
     bar.innerHTML = filters.map((filter) => `
       <button class="filter ${filter.value === activeFilter ? 'active' : ''}" type="button" data-filter="${escapeHtml(filter.value)}">${escapeHtml(filter.label)}</button>
@@ -810,6 +832,7 @@
 
     if (hasUsefulCache(cached)) {
       siteContent = deepMerge(defaults, cached.siteContent || {});
+      if (siteContent.gallery) siteContent.gallery.filters = normalizeGalleryFilters(siteContent.gallery.filters || []);
       currentFairs = normalizeFairs(Array.isArray(cached.fairs) ? cached.fairs : []);
       currentArtworks = normalizeArtworks(
         Array.isArray(cached.artworks) && cached.artworks.length
