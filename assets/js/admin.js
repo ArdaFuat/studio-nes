@@ -9,6 +9,7 @@
   let fairs = [];
   let siteContent = clone(typeof DEFAULT_SITE_CONTENT !== 'undefined' ? DEFAULT_SITE_CONTENT : {});
   let editingId = null;
+  let editingSnapshot = null;
   let editingFairId = null;
   let currentUser = null;
   let unsubscribeArtworks = null;
@@ -273,6 +274,7 @@
 
   const clearForm = () => {
     editingId = null;
+    editingSnapshot = null;
     selectedImageDataUrl = '';
     const imageFileInput = $('#imageFile');
     if (imageFileInput) imageFileInput.value = '';
@@ -295,8 +297,8 @@
     const height = $('#height').value.trim();
     const customSize = $('#size').value.trim();
     const platform = getPlatform($('#platform').value);
-    const current = artworks.find((item) => item.id === editingId);
-    const id = current?.id || `${slugify(title)}-${Date.now()}`;
+    const current = artworks.find((item) => item.id === editingId) || editingSnapshot;
+    const id = editingId || current?.id || `${slugify(title)}-${Date.now()}`;
     const imageUrl = $('#image').value.trim();
     const size = customSize || ((width && height) ? `${width}×${height} cm` : 'Ölçü girilmedi');
 
@@ -332,6 +334,7 @@
   };
 
   const toFirestorePayload = (art) => ({
+    id: art.id,
     title: art.title,
     category: art.category,
     collection: art.collection,
@@ -363,6 +366,7 @@
     const art = artworks.find((item) => item.id === id);
     if (!art) return;
     editingId = id;
+    editingSnapshot = clone(art);
     selectedImageDataUrl = '';
     const imageFileInput = $('#imageFile');
     if (imageFileInput) imageFileInput.value = '';
@@ -1010,6 +1014,8 @@
 
     $('[data-art-form]')?.addEventListener('submit', async (event) => {
       event.preventDefault();
+      const wasEditing = Boolean(editingId);
+      const originalId = editingId;
       const art = readForm();
       const error = validateArtwork(art);
       if (error) {
@@ -1017,10 +1023,13 @@
         return;
       }
       try {
-        setBusy(true, 'Kaydediliyor...');
+        setBusy(true, wasEditing ? 'Değişiklikler kaydediliyor...' : 'Kaydediliyor...');
         await saveArtworkToFirebase(art);
+        const nextItems = artworks.filter((item) => item.id !== art.id && item.id !== originalId);
+        artworks = normalizeArtworks([...nextItems, art]);
+        renderList();
         clearForm();
-        setNotice('Kaydedildi. Değişiklik canlı siteye yansır.', 'success');
+        setNotice(wasEditing ? `“${art.title}” güncellendi. Değişiklik canlı siteye yansır.` : 'Kaydedildi. Değişiklik canlı siteye yansır.', 'success');
       } catch (error) {
         setNotice(`Kaydedilemedi: ${error.message}`, 'error');
       } finally {

@@ -12,7 +12,7 @@
   let sliderCleanup = null;
   let revealObserver = null;
   let fairLightboxState = { images: [], index: 0, title: '' };
-  const PUBLIC_CACHE_KEY = 'studio-nes-public-cache-v4';
+  const PUBLIC_CACHE_KEY = 'studio-nes-public-cache-v5';
   let hasPaintedOnce = false;
   let lastRenderSignature = '';
 
