@@ -15,19 +15,19 @@
       <span></span><span></span><span></span>
     </button>
     <nav class="main-nav" data-nav>
-      <a href="index.html" class="active">Ana Sayfa</a><a href="galeri.html">Galeri</a><a href="fuarlar.html">Fuarlar</a><a href="ozel-siparis.html">Özel Sipariş</a><a href="hakkinda.html">Hakkında</a><a href="iletisim.html">İletişim</a><a href="admin.html" class="login-nav" aria-label="Kullanıcı girişi" title="Kullanıcı girişi"><span class="login-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M12 12.25a4.25 4.25 0 1 0 0-8.5 4.25 4.25 0 0 0 0 8.5Zm0 1.8c-4.15 0-7.35 2.14-7.35 4.9 0 .75.6 1.3 1.35 1.3h12c.75 0 1.35-.55 1.35-1.3 0-2.76-3.2-4.9-7.35-4.9Z"></path></svg></span></a>
+      <a href="index.html" class="active" data-content="nav.home">Ana Sayfa</a><a href="galeri.html" data-content="nav.gallery">Galeri</a><a href="fuarlar.html" data-content="nav.fairs">Fuarlar</a><a href="ozel-siparis.html" data-content="nav.custom">Özel Sipariş</a><a href="hakkinda.html" data-content="nav.about">Hakkında</a><a href="iletisim.html" data-content="nav.contact">İletişim</a><a href="admin.html" class="login-nav" aria-label="Kullanıcı girişi" title="Kullanıcı girişi"><span class="login-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M12 12.25a4.25 4.25 0 1 0 0-8.5 4.25 4.25 0 0 0 0 8.5Zm0 1.8c-4.15 0-7.35 2.14-7.35 4.9 0 .75.6 1.3 1.35 1.3h12c.75 0 1.35-.55 1.35-1.3 0-2.76-3.2-4.9-7.35-4.9Z"></path></svg></span></a>
     </nav>
   </header>
 
   <main>
     <section class="hero">
       <div class="hero-copy reveal">
-        <p class="eyebrow">Akrilik boya · Orijinal tuval · El emeği</p>
-        <h1>Orman yeşilinden ilham alan sakin, zarif ve özgün tablolar.</h1>
-        <p class="lead">Studio Nes, yaşam alanlarına sıcaklık ve karakter katmak için hazırlanan el yapımı akrilik tuval çalışmalarını bir araya getirir.</p>
+        <p class="eyebrow" data-content="home.heroEyebrow">Akrilik boya · Orijinal tuval · El emeği</p>
+        <h1 data-content="home.heroTitle">Orman yeşilinden ilham alan sakin, zarif ve özgün tablolar.</h1>
+        <p class="lead" data-content="home.heroLead">Studio Nes, yaşam alanlarına sıcaklık ve karakter katmak için hazırlanan el yapımı akrilik tuval çalışmalarını bir araya getirir.</p>
         <div class="hero-actions">
-          <a class="btn primary" href="galeri.html">Galeriyi İncele</a>
-          <a class="btn ghost" href="iletisim.html">Satış Linkleri</a>
+          <a class="btn primary" href="galeri.html" data-content="home.heroPrimaryButton">Galeriyi İncele</a>
+          <a class="btn ghost" href="iletisim.html" data-content="home.heroSecondaryButton">Satış Linkleri</a>
         </div>
       </div>
       <div class="hero-art reveal delay-1" aria-label="Öne çıkan tablolar" data-hero-slider>
@@ -52,36 +52,36 @@
 
     <section class="section split cream">
       <div class="section-copy reveal">
-        <p class="eyebrow dark">Sanatçı yaklaşımı</p>
-        <h2>Her çalışma tek, özgün ve elle hazırlanmış bir parça.</h2>
+        <p class="eyebrow dark" data-content="home.approachEyebrow">Sanatçı yaklaşımı</p>
+        <h2 data-content="home.approachTitle">Her çalışma tek, özgün ve elle hazırlanmış bir parça.</h2>
       </div>
       <div class="section-text reveal delay-1">
-        <p>Doğa manzaraları, sakin renk geçişleri, çiçekler, deniz ve orman atmosferi Studio Nes’in öne çıkan temaları arasında. Sitedeki her eser için ölçü, teknik, fiyat ve satış platformu bağlantısı ayrı ayrı gösterilir.</p>
+        <p data-content="home.approachText">Doğa manzaraları, sakin renk geçişleri, çiçekler, deniz ve orman atmosferi Studio Nes’in öne çıkan temaları arasında. Sitedeki her eser için ölçü, teknik, fiyat ve satış platformu bağlantısı ayrı ayrı gösterilir.</p>
       </div>
     </section>
 
     <section class="section">
       <div class="section-head reveal">
-        <p class="eyebrow dark">Öne çıkanlar</p>
-        <h2>Galeriden seçilen tablolar</h2>
-        <a class="text-link" href="galeri.html">Tüm galeriyi gör</a>
+        <p class="eyebrow dark" data-content="home.featuredEyebrow">Öne çıkanlar</p>
+        <h2 data-content="home.featuredTitle">Galeriden seçilen tablolar</h2>
+        <a class="text-link" href="galeri.html" data-content="home.featuredLink">Tüm galeriyi gör</a>
       </div>
       <div class="art-grid" data-featured-grid></div>
     </section>
 
     <section class="section forest-panel reveal">
       <div>
-        <p class="eyebrow">Özel sipariş</p>
-        <h2>Renk paleti, ölçü ve tema seçerek kişiye özel çalışma talep edebilirsin.</h2>
-        <p>Özel siparişlerde istenen renkler, odanın tarzı ve hediye edilecek kişinin zevki birlikte düşünülerek tablo fikri oluşturulur.</p>
+        <p class="eyebrow" data-content="home.customPanelEyebrow">Özel sipariş</p>
+        <h2 data-content="home.customPanelTitle">Renk paleti, ölçü ve tema seçerek kişiye özel çalışma talep edebilirsin.</h2>
+        <p data-content="home.customPanelText">Özel siparişlerde istenen renkler, odanın tarzı ve hediye edilecek kişinin zevki birlikte düşünülerek tablo fikri oluşturulur.</p>
       </div>
-      <a class="btn light" href="ozel-siparis.html">Özel Sipariş Detayları</a>
+      <a class="btn light" href="ozel-siparis.html" data-content="home.customPanelButton">Özel Sipariş Detayları</a>
     </section>
 
     <section class="section link-showcase">
       <div class="section-head reveal">
-        <p class="eyebrow dark">Satış & sosyal medya</p>
-        <h2>Studio Nes’e ulaşabileceğin tüm bağlantılar</h2>
+        <p class="eyebrow dark" data-content="home.linksEyebrow">Satış & sosyal medya</p>
+        <h2 data-content="home.linksTitle">Studio Nes’e ulaşabileceğin tüm bağlantılar</h2>
       </div>
       <div class="link-grid" data-link-grid></div>
     </section>
@@ -92,7 +92,7 @@
     <div class="dialog-body" data-dialog-body></div>
   </dialog>
 
-  <footer class="site-footer"><div class="footer-brand"><img class="footer-wordmark" src="assets/img/studio-nes-wordmark.png" alt="Studio Nes"><p>El yapımı akrilik tuval çalışmaları.</p></div><p>© <span data-year></span> Studio Nes. Tüm hakları saklıdır.</p></footer>
+  <footer class="site-footer"><div class="footer-brand"><img class="footer-wordmark" src="assets/img/studio-nes-wordmark.png" alt="Studio Nes"><p data-content="footer.tagline">El yapımı akrilik tuval çalışmaları.</p></div><p>© <span data-year></span> <span data-content="footer.copyrightSuffix">Studio Nes. Tüm hakları saklıdır.</span></p></footer>
 
   <script src="assets/js/data.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>

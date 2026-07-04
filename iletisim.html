@@ -13,28 +13,24 @@
     <a class="brand" href="index.html" aria-label="Studio Nes ana sayfa"><span class="brand-mark brand-home-mark"><img src="assets/img/home-round-logo.png" alt="Studio Nes logosu"></span><span class="brand-copy"><img class="brand-wordmark" src="assets/img/studio-nes-wordmark.png" alt="Studio Nes"></span></a>
     <button class="nav-toggle" type="button" aria-label="Menüyü aç/kapat" data-nav-toggle><span></span><span></span><span></span></button>
     <nav class="main-nav" data-nav>
-      <a href="index.html">Ana Sayfa</a><a href="galeri.html">Galeri</a><a href="fuarlar.html">Fuarlar</a><a href="ozel-siparis.html">Özel Sipariş</a><a href="hakkinda.html">Hakkında</a><a href="iletisim.html" class="active">İletişim</a><a href="admin.html" class="login-nav" aria-label="Kullanıcı girişi" title="Kullanıcı girişi"><span class="login-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M12 12.25a4.25 4.25 0 1 0 0-8.5 4.25 4.25 0 0 0 0 8.5Zm0 1.8c-4.15 0-7.35 2.14-7.35 4.9 0 .75.6 1.3 1.35 1.3h12c.75 0 1.35-.55 1.35-1.3 0-2.76-3.2-4.9-7.35-4.9Z"></path></svg></span></a>
+      <a href="index.html" data-content="nav.home">Ana Sayfa</a><a href="galeri.html" data-content="nav.gallery">Galeri</a><a href="fuarlar.html" data-content="nav.fairs">Fuarlar</a><a href="ozel-siparis.html" data-content="nav.custom">Özel Sipariş</a><a href="hakkinda.html" data-content="nav.about">Hakkında</a><a href="iletisim.html" class="active" data-content="nav.contact">İletişim</a><a href="admin.html" class="login-nav" aria-label="Kullanıcı girişi" title="Kullanıcı girişi"><span class="login-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M12 12.25a4.25 4.25 0 1 0 0-8.5 4.25 4.25 0 0 0 0 8.5Zm0 1.8c-4.15 0-7.35 2.14-7.35 4.9 0 .75.6 1.3 1.35 1.3h12c.75 0 1.35-.55 1.35-1.3 0-2.76-3.2-4.9-7.35-4.9Z"></path></svg></span></a>
     </nav>
   </header>
   <main>
     <section class="page-hero">
-      <p class="eyebrow">İletişim & Satış</p>
-      <h1>Studio Nes’e sosyal medya ve satış platformlarından ulaş.</h1>
-      <p>Güncel ürün durumu, sipariş, özel çalışma ve soru sormak için aşağıdaki bağlantıları kullanabilirsin.</p>
+      <p class="eyebrow" data-content="contact.eyebrow">İletişim & Satış</p>
+      <h1 data-content="contact.title">Studio Nes’e sosyal medya ve satış platformlarından ulaş.</h1>
+      <p data-content="contact.intro">Güncel ürün durumu, sipariş, özel çalışma ve soru sormak için aşağıdaki bağlantıları kullanabilirsin.</p>
     </section>
     <section class="section no-pad-top">
       <div class="link-grid large" data-link-grid></div>
     </section>
     <section class="section faq-section">
-      <div class="section-head reveal"><p class="eyebrow dark">SSS</p><h2>Sık sorulabilecek sorular</h2></div>
-      <div class="faq-grid">
-        <details open><summary>Tablolar baskı mı?</summary><p>Galeri metinleri, çalışmaların tuval üzerine el emeğiyle hazırlanmış orijinal akrilik işler olarak sunulduğunu belirtir.</p></details>
-        <details><summary>Kargo ve paketleme nasıl olur?</summary><p>Satış platformundaki ürün sayfasında belirtilen güncel teslimat ve kargo bilgileri esas alınır.</p></details>
-        <details><summary>Özel sipariş alınır mı?</summary><p>Evet, ölçü, renk paleti ve tema üzerinden özel çalışma talebi için sosyal medya bağlantılarından iletişime geçilebilir.</p></details>
-      </div>
+      <div class="section-head reveal"><p class="eyebrow dark" data-content="contact.faqEyebrow">SSS</p><h2 data-content="contact.faqTitle">Sık sorulabilecek sorular</h2></div>
+      <div class="faq-grid" data-faq-grid></div>
     </section>
   </main>
-  <footer class="site-footer"><div class="footer-brand"><img class="footer-wordmark" src="assets/img/studio-nes-wordmark.png" alt="Studio Nes"><p>El yapımı akrilik tuval çalışmaları.</p></div><p>© <span data-year></span> Studio Nes. Tüm hakları saklıdır.</p></footer>
+  <footer class="site-footer"><div class="footer-brand"><img class="footer-wordmark" src="assets/img/studio-nes-wordmark.png" alt="Studio Nes"><p data-content="footer.tagline">El yapımı akrilik tuval çalışmaları.</p></div><p>© <span data-year></span> <span data-content="footer.copyrightSuffix">Studio Nes. Tüm hakları saklıdır.</span></p></footer>
   <script src="assets/js/data.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>

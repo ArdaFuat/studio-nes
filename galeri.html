@@ -13,31 +13,21 @@
     <a class="brand" href="index.html" aria-label="Studio Nes ana sayfa"><span class="brand-mark brand-home-mark"><img src="assets/img/home-round-logo.png" alt="Studio Nes logosu"></span><span class="brand-copy"><img class="brand-wordmark" src="assets/img/studio-nes-wordmark.png" alt="Studio Nes"></span></a>
     <button class="nav-toggle" type="button" aria-label="Menüyü aç/kapat" data-nav-toggle><span></span><span></span><span></span></button>
     <nav class="main-nav" data-nav>
-      <a href="index.html">Ana Sayfa</a><a href="galeri.html" class="active">Galeri</a><a href="fuarlar.html">Fuarlar</a><a href="ozel-siparis.html">Özel Sipariş</a><a href="hakkinda.html">Hakkında</a><a href="iletisim.html">İletişim</a><a href="admin.html" class="login-nav" aria-label="Kullanıcı girişi" title="Kullanıcı girişi"><span class="login-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M12 12.25a4.25 4.25 0 1 0 0-8.5 4.25 4.25 0 0 0 0 8.5Zm0 1.8c-4.15 0-7.35 2.14-7.35 4.9 0 .75.6 1.3 1.35 1.3h12c.75 0 1.35-.55 1.35-1.3 0-2.76-3.2-4.9-7.35-4.9Z"></path></svg></span></a>
+      <a href="index.html" data-content="nav.home">Ana Sayfa</a><a href="galeri.html" class="active" data-content="nav.gallery">Galeri</a><a href="fuarlar.html" data-content="nav.fairs">Fuarlar</a><a href="ozel-siparis.html" data-content="nav.custom">Özel Sipariş</a><a href="hakkinda.html" data-content="nav.about">Hakkında</a><a href="iletisim.html" data-content="nav.contact">İletişim</a><a href="admin.html" class="login-nav" aria-label="Kullanıcı girişi" title="Kullanıcı girişi"><span class="login-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M12 12.25a4.25 4.25 0 1 0 0-8.5 4.25 4.25 0 0 0 0 8.5Zm0 1.8c-4.15 0-7.35 2.14-7.35 4.9 0 .75.6 1.3 1.35 1.3h12c.75 0 1.35-.55 1.35-1.3 0-2.76-3.2-4.9-7.35-4.9Z"></path></svg></span></a>
     </nav>
   </header>
 
   <main>
     <section class="page-hero">
-      <p class="eyebrow">Galeri</p>
-      <h1>El yapımı akrilik tuvaller</h1>
-      <p>Tabloları ve özel sipariş örneklerini konuya göre filtreleyebilir, detaylarını inceleyebilir ve satış platformlarındaki güncel durumuna gidebilirsin.</p>
+      <p class="eyebrow" data-content="gallery.eyebrow">Galeri</p>
+      <h1 data-content="gallery.title">El yapımı akrilik tuvaller</h1>
+      <p data-content="gallery.intro">Tabloları ve özel sipariş örneklerini konuya göre filtreleyebilir, detaylarını inceleyebilir ve satış platformlarındaki güncel durumuna gidebilirsin.</p>
     </section>
 
     <section class="section no-pad-top">
-      <div class="filter-bar" aria-label="Galeri filtreleri">
-        <button class="filter active" type="button" data-filter="all">Tümü</button>
-        <button class="filter" type="button" data-filter="doga">Doğa</button>
-        <button class="filter" type="button" data-filter="deniz">Deniz</button>
-        <button class="filter" type="button" data-filter="cicek">Çiçek</button>
-        <button class="filter" type="button" data-filter="ozel">Dizi/Film Özel Tasarım</button>
-        <button class="filter" type="button" data-filter="portre">Evcil Hayvan Portresi</button>
-        <button class="filter" type="button" data-filter="soyut">Soyut</button>
-        <button class="filter" type="button" data-filter="manzara">Manzara</button>
-        <button class="filter" type="button" data-filter="diger">Diğer</button>
-      </div>
+      <div class="filter-bar" aria-label="Galeri filtreleri" data-gallery-filters></div>
       <div class="art-grid full" data-gallery-grid></div>
-      <p class="gallery-note">Not: Fiyat, stok ve özel sipariş bilgileri satış platformlarında değişebilir. Özel tasarım örnekleri hazır satılık ürün değil; sipariş fikri göstermek için eklenmiştir.</p>
+      <p class="gallery-note" data-content="gallery.note">Not: Fiyat, stok ve özel sipariş bilgileri satış platformlarında değişebilir. Özel tasarım örnekleri hazır satılık ürün değil; sipariş fikri göstermek için eklenmiştir.</p>
     </section>
   </main>
 
@@ -46,7 +36,7 @@
     <div class="dialog-body" data-dialog-body></div>
   </dialog>
 
-  <footer class="site-footer"><div class="footer-brand"><img class="footer-wordmark" src="assets/img/studio-nes-wordmark.png" alt="Studio Nes"><p>El yapımı akrilik tuval çalışmaları.</p></div><p>© <span data-year></span> Studio Nes. Tüm hakları saklıdır.</p></footer>
+  <footer class="site-footer"><div class="footer-brand"><img class="footer-wordmark" src="assets/img/studio-nes-wordmark.png" alt="Studio Nes"><p data-content="footer.tagline">El yapımı akrilik tuval çalışmaları.</p></div><p>© <span data-year></span> <span data-content="footer.copyrightSuffix">Studio Nes. Tüm hakları saklıdır.</span></p></footer>
   <script src="assets/js/data.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>

@@ -1,8 +1,8 @@
 FIREBASE KURULUMU - NESS ART CANLI ADMIN (STORAGE YOK)
 =====================================================
 
-Bu sürümde Firebase Storage kullanılmaz. Ürün bilgileri Firestore'a kaydedilir.
-Görseller için admin panelde sadece görsel yolu / URL girilir.
+Bu sürümde Firebase Storage kullanılmaz. Ürün, site yazıları, bağlantılar ve fuarlar Firestore'a kaydedilir.
+Görseller için admin panelde görsel yolu / URL girilebilir veya bilgisayardan görsel seçilebilir; görsel otomatik küçültülüp Firestore kaydına eklenir.
 
 1) Firebase projesi
 -------------------
@@ -48,6 +48,16 @@ service cloud.firestore {
       allow read: if true;
       allow create, update, delete: if isAdmin();
     }
+
+    match /siteContent/{docId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /fairs/{fairId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
   }
 }
 
@@ -73,7 +83,7 @@ https://site.com/gorsel.webp
 
 7) Netlify'a yükle
 ------------------
-Zip'i aç. İçindeki ness_art_site klasörünün içeriğini Netlify'a yükle.
+Zip'i aç. İçindeki studio-nes-main klasörünün içeriğini Netlify'a yükle.
 Admin panel:
 https://ness-art.netlify.app/admin.html
 
@@ -81,15 +91,19 @@ https://ness-art.netlify.app/admin.html
 ---------------------
 Admin paneline giriş yap.
 "İlk Ürünleri Aktar" butonuna bir kez bas.
-Bundan sonra ürün ekleme/düzenleme/silme işlemleri Firestore üzerinden canlı çalışır.
+"Site yazıları" bölümündeki "Varsayılanı Aktar" butonuna bir kez bas.
+Bundan sonra ürün, site yazıları, bağlantılar ve fuar ekleme/düzenleme/silme işlemleri Firestore üzerinden canlı çalışır.
 
 9) Günlük kullanım
 ------------------
-- Ürün ekle: formu doldur, görsel yolu/URL yaz, Kaydet.
+- Ürün ekle: formu doldur, görsel seç veya görsel URL/yol yaz, Kaydet.
 - Ürün düzenle: sağdaki listeden Düzenle.
 - Ürün sil: Sil.
 - Sırayı değiştir: Yukarı / Aşağı.
-- Yeni görsel için en pratik yol: görseli assets/img klasörüne koy, admin panelde assets/img/dosya-adi.jpg yaz.
+- Site yazıları: admin panelindeki "Site yazıları" bölümünden tüm sayfa başlıklarını, açıklamaları, notları, SSS ve kategori yazılarını değiştir.
+- Bağlantılar: sosyal medya/satış kartlarını ekle, sil veya düzenle.
+- Fuarlar: fuar adı, tarih, konum, açıklama ve birden fazla fotoğraf ekle. Fuar fotoğrafları canlı sitede büyütülüp ileri/geri kaydırılabilir. Çok fazla fotoğrafta direkt görsel URL kullanmak Firestore sınırı açısından daha sağlıklıdır.
+- Yeni görsel için iki yol var: bilgisayardan seçmek veya assets/img/dosya-adi.jpg gibi yol yazmak.
 
 
 STORAGE GEREKMEZ:

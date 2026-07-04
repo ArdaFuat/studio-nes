@@ -1,9 +1,22 @@
 (function () {
   const DATA_JSON_URL = 'assets/data/artworks.json';
-  const FIREBASE_COLLECTION = 'artworks';
+  const FIREBASE_ARTWORKS_COLLECTION = 'artworks';
+  const FIREBASE_CONTENT_COLLECTION = 'siteContent';
+  const FIREBASE_CONTENT_DOC = 'main';
+  const FIREBASE_FAIRS_COLLECTION = 'fairs';
+
   let currentArtworks = [];
+  let currentFairs = [];
+  let siteContent = clone(typeof DEFAULT_SITE_CONTENT !== 'undefined' ? DEFAULT_SITE_CONTENT : {});
   let activeFilter = 'all';
   let sliderCleanup = null;
+  let revealObserver = null;
+  let fairLightboxState = { images: [], index: 0, title: '' };
+
+  function clone(value) {
+    if (value === undefined || value === null) return value;
+    try { return JSON.parse(JSON.stringify(value)); } catch (_) { return value; }
+  }
 
   const escapeHtml = (value = '') => String(value)
     .replaceAll('&', '&amp;')
@@ -37,6 +50,33 @@
     .replace(/ç/g, 'c')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '') || `urun-${Date.now()}`;
+
+  const deepMerge = (base, override) => {
+    const out = clone(base) || {};
+    if (!override || typeof override !== 'object') return out;
+    Object.keys(override).forEach((key) => {
+      const value = override[key];
+      if (Array.isArray(value)) out[key] = clone(value);
+      else if (value && typeof value === 'object') out[key] = deepMerge(out[key] || {}, value);
+      else if (value !== undefined && value !== null) out[key] = value;
+    });
+    return out;
+  };
+
+  const pathGet = (obj, path, fallback = '') => {
+    const value = String(path || '').split('.').reduce((acc, part) => (acc && acc[part] !== undefined ? acc[part] : undefined), obj);
+    return value === undefined || value === null ? fallback : value;
+  };
+
+  const csvToArray = (value) => String(value || '')
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  const newlineToArray = (value) => String(value || '')
+    .split('\n')
+    .map((item) => item.trim())
+    .filter(Boolean);
 
   const isFirebaseConfigured = () => {
     try {
@@ -89,6 +129,28 @@
     .map(normalizeArtwork)
     .sort((a, b) => a.order - b.order);
 
+  const normalizeFair = (fair = {}, index = 0) => {
+    const rawImages = Array.isArray(fair.images) ? fair.images : newlineToArray(fair.images || '');
+    return {
+      id: fair.id || slugify(fair.title || `fuar-${index}`),
+      title: fair.title || 'İsimsiz fuar',
+      date: fair.date || '',
+      location: fair.location || '',
+      status: fair.status || '',
+      description: fair.description || '',
+      images: rawImages.map(safeUrl).filter(Boolean),
+      visible: fair.visible !== false,
+      upcoming: Boolean(fair.upcoming),
+      order: Number.isFinite(Number(fair.order)) ? Number(fair.order) : index,
+      updatedAt: fair.updatedAt || ''
+    };
+  };
+
+  const normalizeFairs = (items) => (Array.isArray(items) ? items : [])
+    .map(normalizeFair)
+    .filter((fair) => fair.visible)
+    .sort((a, b) => a.order - b.order);
+
   const fetchJsonArtworks = async () => {
     try {
       const response = await fetch(DATA_JSON_URL, { cache: 'no-store' });
@@ -110,7 +172,7 @@
     const app = getFirebaseApp();
     if (!app || !firebase.firestore) return null;
     try {
-      const snapshot = await firebase.firestore().collection(FIREBASE_COLLECTION).orderBy('order', 'asc').get();
+      const snapshot = await firebase.firestore().collection(FIREBASE_ARTWORKS_COLLECTION).orderBy('order', 'asc').get();
       const items = snapshot.docs.map((doc, index) => normalizeArtwork({ id: doc.id, ...doc.data() }, index));
       return items.length ? items : null;
     } catch (error) {
@@ -125,17 +187,55 @@
     return loadFallbackArtworks();
   };
 
+  const loadFirebaseContent = async () => {
+    const app = getFirebaseApp();
+    if (!app || !firebase.firestore) return null;
+    try {
+      const doc = await firebase.firestore().collection(FIREBASE_CONTENT_COLLECTION).doc(FIREBASE_CONTENT_DOC).get();
+      return doc.exists ? doc.data() : null;
+    } catch (error) {
+      console.warn('Firebase site içeriği okunamadı:', error);
+      return null;
+    }
+  };
+
+  const loadContent = async () => {
+    const defaults = typeof DEFAULT_SITE_CONTENT !== 'undefined' ? DEFAULT_SITE_CONTENT : {};
+    const firebaseContent = await loadFirebaseContent();
+    return deepMerge(defaults, firebaseContent || {});
+  };
+
+  const loadFirebaseFairs = async () => {
+    const app = getFirebaseApp();
+    if (!app || !firebase.firestore) return null;
+    try {
+      const snapshot = await firebase.firestore().collection(FIREBASE_FAIRS_COLLECTION).orderBy('order', 'asc').get();
+      const items = snapshot.docs.map((doc, index) => normalizeFair({ id: doc.id, ...doc.data() }, index));
+      return items.length ? items : null;
+    } catch (error) {
+      console.warn('Firebase fuarları okunamadı:', error);
+      return null;
+    }
+  };
+
+  const loadFairs = async () => {
+    const firebaseItems = await loadFirebaseFairs();
+    if (firebaseItems && firebaseItems.length) return normalizeFairs(firebaseItems);
+    return normalizeFairs(typeof DEFAULT_FAIRS !== 'undefined' ? DEFAULT_FAIRS : []);
+  };
+
   const observeReveals = () => {
+    if (revealObserver) revealObserver.disconnect();
     if (!('IntersectionObserver' in window)) {
       document.querySelectorAll('.reveal').forEach((el) => el.classList.add('visible'));
       return;
     }
-    const observer = new IntersectionObserver((entries) => {
+    revealObserver = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) entry.target.classList.add('visible');
       });
     }, { threshold: 0.12 });
-    document.querySelectorAll('.reveal').forEach((el) => observer.observe(el));
+    document.querySelectorAll('.reveal').forEach((el) => revealObserver.observe(el));
   };
 
   const renderArtworkCard = (art) => {
@@ -167,12 +267,20 @@
       </article>`;
   };
 
+  const findByIds = (publicArtworks, ids, fallback) => {
+    const selected = ids.map((id) => publicArtworks.find((art) => art.id === id)).filter(Boolean);
+    return selected.length ? selected : fallback;
+  };
+
   const getHomeArtworks = (publicArtworks) => {
-    const homeArtworkIds = ['white-lilies', 'orman', 'kirlar'];
-    const preferred = homeArtworkIds
-      .map((id) => publicArtworks.find((art) => art.id === id))
-      .filter(Boolean);
-    return preferred.length ? preferred : publicArtworks.slice(0, 3);
+    const ids = csvToArray(pathGet(siteContent, 'home.featuredArtworkIds', 'white-lilies, orman, kirlar'));
+    return findByIds(publicArtworks, ids, publicArtworks.slice(0, 3));
+  };
+
+  const getCustomArtworks = (publicArtworks) => {
+    const ids = csvToArray(pathGet(siteContent, 'custom.customArtworkIds', ''));
+    const fallback = publicArtworks.filter((art) => art.collection === 'custom');
+    return ids.length ? findByIds(publicArtworks, ids, fallback) : fallback;
   };
 
   const applyActiveFilter = () => {
@@ -191,16 +299,14 @@
     const heroSlider = document.querySelector('[data-hero-slider]');
     if (!heroSlider) return;
 
-    const heroSlideData = (typeof HERO_HOME_SLIDES !== 'undefined' && Array.isArray(HERO_HOME_SLIDES))
-      ? HERO_HOME_SLIDES
-      : getHomeArtworks(publicArtworks).map((art) => ({ artId: art.id, image: art.image }));
-    let slides = heroSlideData
-      .map((item) => {
+    const slideIds = csvToArray(pathGet(siteContent, 'home.heroSlideArtworkIds', 'white-lilies, orman, kirlar'));
+    let slides = findByIds(publicArtworks, slideIds, getHomeArtworks(publicArtworks));
+    if (!slides.length && typeof HERO_HOME_SLIDES !== 'undefined' && Array.isArray(HERO_HOME_SLIDES)) {
+      slides = HERO_HOME_SLIDES.map((item) => {
         const art = publicArtworks.find((entry) => entry.id === item.artId);
         return art ? { ...art, image: item.image || art.image } : null;
-      })
-      .filter(Boolean);
-    if (!slides.length) slides = getHomeArtworks(publicArtworks);
+      }).filter(Boolean);
+    }
 
     const track = heroSlider.querySelector('[data-hero-slider-track]');
     const dotsWrap = heroSlider.querySelector('[data-hero-slider-dots]');
@@ -247,7 +353,7 @@
     const stopAuto = () => { if (autoTimer) window.clearInterval(autoTimer); };
     const startAuto = () => {
       stopAuto();
-      autoTimer = window.setInterval(() => updateSlider(activeIndex + 1), 5200);
+      if (slides.length > 1) autoTimer = window.setInterval(() => updateSlider(activeIndex + 1), 5200);
     };
 
     const prevHandler = () => { updateSlider(activeIndex - 1); startAuto(); };
@@ -277,64 +383,204 @@
     if (galleryGrid) galleryGrid.innerHTML = publicArtworks.map((art) => renderArtworkCard(art)).join('');
 
     const customGrid = document.querySelector('[data-custom-grid]');
-    if (customGrid) {
-      customGrid.innerHTML = publicArtworks
-        .filter((art) => art.collection === 'custom')
-        .map((art) => renderArtworkCard(art))
-        .join('');
-    }
+    if (customGrid) customGrid.innerHTML = getCustomArtworks(publicArtworks).map((art) => renderArtworkCard(art)).join('');
 
     initHeroSlider(publicArtworks);
     observeReveals();
     applyActiveFilter();
   };
 
+  const renderTextContent = () => {
+    document.querySelectorAll('[data-content]').forEach((node) => {
+      const value = pathGet(siteContent, node.dataset.content, node.textContent || '');
+      if (node.tagName === 'INPUT' || node.tagName === 'TEXTAREA') node.value = value;
+      else node.textContent = value;
+    });
+
+    document.querySelectorAll('[data-content-src]').forEach((node) => {
+      const url = safeUrl(pathGet(siteContent, node.dataset.contentSrc, node.getAttribute('src') || ''));
+      if (url) node.setAttribute('src', url);
+    });
+
+    document.querySelectorAll('[data-content-alt]').forEach((node) => {
+      node.setAttribute('alt', pathGet(siteContent, node.dataset.contentAlt, node.getAttribute('alt') || ''));
+    });
+
+    document.querySelectorAll('[data-year]').forEach((node) => (node.textContent = new Date().getFullYear()));
+  };
+
   const renderStaticLinks = () => {
+    const links = Array.isArray(siteContent.links) && siteContent.links.length ? siteContent.links : (typeof SITE_LINKS !== 'undefined' ? SITE_LINKS : []);
     const linkGrids = document.querySelectorAll('[data-link-grid]');
     linkGrids.forEach((grid) => {
-      grid.innerHTML = SITE_LINKS.map((link) => `
+      grid.innerHTML = links.map((link) => `
         <a class="link-card reveal" href="${escapeHtml(safeUrl(link.url))}" target="_blank" rel="noopener">
-          <span>${escapeHtml(link.type)}</span>
-          <h3>${escapeHtml(link.name)}</h3>
-          <p>${escapeHtml(link.handle)}</p>
-          <small>${escapeHtml(link.description)}</small>
+          <span>${escapeHtml(link.type || '')}</span>
+          <h3>${escapeHtml(link.name || '')}</h3>
+          <p>${escapeHtml(link.handle || '')}</p>
+          <small>${escapeHtml(link.description || '')}</small>
         </a>`).join('');
     });
   };
 
-  const setupRealtimeArtworks = () => {
+  const renderGalleryFilters = () => {
+    const bar = document.querySelector('[data-gallery-filters]');
+    if (!bar) return;
+    const filters = Array.isArray(siteContent.gallery?.filters) && siteContent.gallery.filters.length
+      ? siteContent.gallery.filters
+      : [{ value: 'all', label: 'Tümü' }, ...(typeof ARTWORK_CATEGORIES !== 'undefined' ? ARTWORK_CATEGORIES : [])];
+    if (!filters.some((filter) => filter.value === activeFilter)) activeFilter = 'all';
+    bar.innerHTML = filters.map((filter) => `
+      <button class="filter ${filter.value === activeFilter ? 'active' : ''}" type="button" data-filter="${escapeHtml(filter.value)}">${escapeHtml(filter.label)}</button>
+    `).join('');
+  };
+
+  const renderProcessGrid = () => {
+    const grid = document.querySelector('[data-process-grid]');
+    if (!grid) return;
+    const process = Array.isArray(siteContent.custom?.process) ? siteContent.custom.process : [];
+    grid.innerHTML = process.map((item, index) => `
+      <article class="process-card reveal ${index ? `delay-${Math.min(index, 3)}` : ''}">
+        <span>${escapeHtml(item.no || String(index + 1).padStart(2, '0'))}</span>
+        <h2>${escapeHtml(item.title || '')}</h2>
+        <p>${escapeHtml(item.text || '')}</p>
+      </article>`).join('');
+  };
+
+  const renderValuesGrid = () => {
+    const grid = document.querySelector('[data-values-grid]');
+    if (!grid) return;
+    const values = Array.isArray(siteContent.about?.values) ? siteContent.about.values : [];
+    grid.innerHTML = values.map((item) => `<article><h2>${escapeHtml(item.title || '')}</h2><p>${escapeHtml(item.text || '')}</p></article>`).join('');
+  };
+
+  const renderFaqGrid = () => {
+    const grid = document.querySelector('[data-faq-grid]');
+    if (!grid) return;
+    const faqs = Array.isArray(siteContent.contact?.faqs) ? siteContent.contact.faqs : [];
+    grid.innerHTML = faqs.map((item, index) => `
+      <details ${index === 0 ? 'open' : ''}>
+        <summary>${escapeHtml(item.question || '')}</summary>
+        <p>${escapeHtml(item.answer || '')}</p>
+      </details>`).join('');
+  };
+
+  const renderFairs = (items) => {
+    currentFairs = normalizeFairs(items);
+    const grid = document.querySelector('[data-fairs-grid]');
+    const empty = document.querySelector('[data-fairs-empty]');
+    if (!grid) return;
+
+    if (!currentFairs.length) {
+      grid.innerHTML = '';
+      if (empty) {
+        empty.removeAttribute('hidden');
+        empty.innerHTML = `
+          <div class="timeline-card reveal">
+            <span class="date-pill">${escapeHtml(pathGet(siteContent, 'fairs.emptyDate', 'Yakında'))}</span>
+            <h2>${escapeHtml(pathGet(siteContent, 'fairs.emptyTitle', 'Fuar bilgileri yakında eklenecek'))}</h2>
+            <p>${escapeHtml(pathGet(siteContent, 'fairs.emptyText', ''))}</p>
+            <ul class="clean-list">${newlineToArray(pathGet(siteContent, 'fairs.emptyItems', '')).map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>
+          </div>`;
+      }
+      observeReveals();
+      return;
+    }
+
+    if (empty) empty.setAttribute('hidden', '');
+    grid.innerHTML = currentFairs.map((fair) => {
+      const cover = fair.images[0] || 'assets/img/ness-logo.png';
+      const imagesPreview = fair.images.slice(0, 4).map((image, index) => `
+        <button type="button" class="fair-thumb" data-fair-id="${escapeHtml(fair.id)}" data-fair-image-index="${index}" aria-label="${escapeHtml(fair.title)} fotoğraf ${index + 1}">
+          <img src="${escapeHtml(image)}" alt="${escapeHtml(fair.title)} fotoğraf ${index + 1}" loading="lazy">
+        </button>`).join('');
+      return `
+        <article class="fair-card reveal">
+          <button class="fair-cover" type="button" data-fair-id="${escapeHtml(fair.id)}" data-fair-image-index="0" aria-label="${escapeHtml(fair.title)} fotoğraflarını aç">
+            <img src="${escapeHtml(cover)}" alt="${escapeHtml(fair.title)}" loading="lazy">
+            <span>${escapeHtml(fair.images.length ? `${fair.images.length} fotoğraf` : 'Fotoğraf yok')}</span>
+          </button>
+          <div class="fair-copy">
+            <span class="date-pill">${escapeHtml(fair.status || fair.date || (fair.upcoming ? 'Yakında' : 'Geçmiş fuar'))}</span>
+            <h2>${escapeHtml(fair.title)}</h2>
+            <p class="fair-meta">${escapeHtml([fair.date, fair.location].filter(Boolean).join(' · '))}</p>
+            <p>${escapeHtml(fair.description)}</p>
+            <div class="fair-thumbs">${imagesPreview}</div>
+          </div>
+        </article>`;
+    }).join('');
+    observeReveals();
+  };
+
+  const renderAllContent = () => {
+    renderTextContent();
+    renderGalleryFilters();
+    renderProcessGrid();
+    renderValuesGrid();
+    renderFaqGrid();
+    renderStaticLinks();
+    renderFairs(currentFairs);
+    renderPageArtworks(currentArtworks);
+    observeReveals();
+  };
+
+  const setupRealtime = () => {
     const app = getFirebaseApp();
     if (!app || !firebase.firestore) return;
     try {
-      firebase.firestore().collection(FIREBASE_COLLECTION).orderBy('order', 'asc')
+      firebase.firestore().collection(FIREBASE_ARTWORKS_COLLECTION).orderBy('order', 'asc')
         .onSnapshot((snapshot) => {
           if (snapshot.empty) return;
           const items = snapshot.docs.map((doc, index) => normalizeArtwork({ id: doc.id, ...doc.data() }, index));
           renderPageArtworks(items);
-        }, (error) => {
-          console.warn('Firebase canlı takip kapandı:', error);
-        });
+        }, (error) => console.warn('Firebase ürün canlı takip kapandı:', error));
+
+      firebase.firestore().collection(FIREBASE_CONTENT_COLLECTION).doc(FIREBASE_CONTENT_DOC)
+        .onSnapshot((doc) => {
+          if (!doc.exists) return;
+          siteContent = deepMerge(typeof DEFAULT_SITE_CONTENT !== 'undefined' ? DEFAULT_SITE_CONTENT : {}, doc.data());
+          renderAllContent();
+        }, (error) => console.warn('Firebase site içeriği canlı takip kapandı:', error));
+
+      firebase.firestore().collection(FIREBASE_FAIRS_COLLECTION).orderBy('order', 'asc')
+        .onSnapshot((snapshot) => {
+          currentFairs = snapshot.docs.map((doc, index) => normalizeFair({ id: doc.id, ...doc.data() }, index));
+          renderFairs(currentFairs);
+        }, (error) => console.warn('Firebase fuar canlı takip kapandı:', error));
     } catch (error) {
       console.warn('Firebase canlı takip başlatılamadı:', error);
     }
   };
 
-  const init = async () => {
-    document.querySelectorAll('[data-year]').forEach((node) => (node.textContent = new Date().getFullYear()));
+  const updateFairLightbox = () => {
+    const dialog = document.querySelector('[data-fair-dialog]');
+    const body = document.querySelector('[data-fair-dialog-body]');
+    if (!dialog || !body || !fairLightboxState.images.length) return;
+    const image = fairLightboxState.images[fairLightboxState.index];
+    body.innerHTML = `
+      <div class="fair-lightbox">
+        <button class="fair-lightbox-arrow" type="button" data-fair-lightbox-prev aria-label="Önceki fotoğraf">‹</button>
+        <img src="${escapeHtml(image)}" alt="${escapeHtml(fairLightboxState.title)} fotoğraf ${fairLightboxState.index + 1}">
+        <button class="fair-lightbox-arrow" type="button" data-fair-lightbox-next aria-label="Sonraki fotoğraf">›</button>
+        <p>${escapeHtml(fairLightboxState.title)} · ${fairLightboxState.index + 1}/${fairLightboxState.images.length}</p>
+      </div>`;
+  };
 
-    const navToggle = document.querySelector('[data-nav-toggle]');
-    const nav = document.querySelector('[data-nav]');
-    if (navToggle && nav) {
-      navToggle.addEventListener('click', () => {
-        nav.classList.toggle('open');
-        navToggle.classList.toggle('open');
-      });
-    }
+  const openFairLightbox = (fairId, index = 0) => {
+    const fair = currentFairs.find((item) => item.id === fairId);
+    const dialog = document.querySelector('[data-fair-dialog]');
+    if (!fair || !dialog || !fair.images.length) return;
+    fairLightboxState = {
+      images: fair.images,
+      index: Math.max(0, Math.min(Number(index) || 0, fair.images.length - 1)),
+      title: fair.title
+    };
+    updateFairLightbox();
+    if (typeof dialog.showModal === 'function') dialog.showModal();
+    else dialog.setAttribute('open', '');
+  };
 
-    renderStaticLinks();
-    renderPageArtworks(await loadArtworks());
-    setupRealtimeArtworks();
-
+  const setupDialogsAndClicks = () => {
     const dialog = document.querySelector('[data-art-dialog]');
     const dialogBody = document.querySelector('[data-dialog-body]');
     const closeDialog = document.querySelector('[data-close-dialog]');
@@ -361,8 +607,28 @@
     };
 
     document.addEventListener('click', (event) => {
-      const detailButton = event.target.closest('[data-art-id]');
-      if (detailButton) openDetail(detailButton.dataset.artId);
+      const artButton = event.target.closest('[data-art-id]');
+      if (artButton) openDetail(artButton.dataset.artId);
+
+      const filterButton = event.target.closest('[data-filter]');
+      if (filterButton) {
+        document.querySelectorAll('[data-filter]').forEach((btn) => btn.classList.remove('active'));
+        filterButton.classList.add('active');
+        activeFilter = filterButton.dataset.filter || 'all';
+        applyActiveFilter();
+      }
+
+      const fairButton = event.target.closest('[data-fair-id]');
+      if (fairButton) openFairLightbox(fairButton.dataset.fairId, fairButton.dataset.fairImageIndex || 0);
+
+      if (event.target.closest('[data-fair-lightbox-prev]')) {
+        fairLightboxState.index = (fairLightboxState.index - 1 + fairLightboxState.images.length) % fairLightboxState.images.length;
+        updateFairLightbox();
+      }
+      if (event.target.closest('[data-fair-lightbox-next]')) {
+        fairLightboxState.index = (fairLightboxState.index + 1) % fairLightboxState.images.length;
+        updateFairLightbox();
+      }
     });
 
     if (closeDialog && dialog) {
@@ -374,15 +640,34 @@
       });
     }
 
-    const filterButtons = document.querySelectorAll('[data-filter]');
-    filterButtons.forEach((button) => {
-      button.addEventListener('click', () => {
-        filterButtons.forEach((btn) => btn.classList.remove('active'));
-        button.classList.add('active');
-        activeFilter = button.dataset.filter || 'all';
-        applyActiveFilter();
+    const fairDialog = document.querySelector('[data-fair-dialog]');
+    const fairClose = document.querySelector('[data-close-fair-dialog]');
+    if (fairDialog && fairClose) {
+      fairClose.addEventListener('click', () => fairDialog.close());
+      fairDialog.addEventListener('click', (event) => {
+        const rect = fairDialog.getBoundingClientRect();
+        const clickedOutside = event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom;
+        if (clickedOutside) fairDialog.close();
       });
-    });
+    }
+  };
+
+  const init = async () => {
+    const navToggle = document.querySelector('[data-nav-toggle]');
+    const nav = document.querySelector('[data-nav]');
+    if (navToggle && nav) {
+      navToggle.addEventListener('click', () => {
+        nav.classList.toggle('open');
+        navToggle.classList.toggle('open');
+      });
+    }
+
+    siteContent = await loadContent();
+    currentFairs = await loadFairs();
+    currentArtworks = await loadArtworks();
+    renderAllContent();
+    setupRealtime();
+    setupDialogsAndClicks();
   };
 
   init();
