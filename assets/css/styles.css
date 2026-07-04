@@ -488,11 +488,22 @@ body.content-settled .site-footer {
 .forest-panel p { color: rgba(255, 250, 241, .75); max-width: 720px; }
 
 .link-grid {
+  --link-cols: 5;
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(var(--link-cols), minmax(0, 1fr));
   gap: .9rem;
 }
-.link-grid.large { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.link-grid.large { --link-cols: 3; }
+.link-grid[data-link-count="1"],
+.link-grid.large[data-link-count="1"] { --link-cols: 1; }
+.link-grid[data-link-count="2"],
+.link-grid.large[data-link-count="2"] { --link-cols: 2; }
+.link-grid[data-link-count="3"],
+.link-grid.large[data-link-count="3"] { --link-cols: 3; }
+.link-grid[data-link-count="4"],
+.link-grid.large[data-link-count="4"] { --link-cols: 4; }
+.link-grid[data-link-count="5"],
+.link-grid.large[data-link-count="5"] { --link-cols: 5; }
 .link-card {
   display: grid;
   gap: .35rem;
@@ -660,6 +671,7 @@ summary { cursor: pointer; font-weight: 900; color: var(--forest-900); }
   .hero, .split, .about-hero, .timeline-section { grid-template-columns: 1fr; }
   .hero { margin-top: .4rem; padding-top: 1rem; }
   .art-grid, .art-grid.full, .link-grid, .link-grid.large { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .link-grid[data-link-count], .link-grid.large[data-link-count] { --link-cols: 2; }
   .process-grid, .values-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .forest-panel { flex-direction: column; align-items: flex-start; }
 }
@@ -696,6 +708,7 @@ summary { cursor: pointer; font-weight: 900; color: var(--forest-900); }
   .page-hero { padding: 2.8rem 1rem 1.1rem; }
   .section.no-pad-top { padding-top: .35rem; }
   .art-grid, .art-grid.full, .link-grid, .link-grid.large, .process-grid, .values-grid { grid-template-columns: 1fr; }
+  .link-grid[data-link-count], .link-grid.large[data-link-count] { --link-cols: 1; }
   .section-head { align-items: flex-start; flex-direction: column; margin-bottom: 1.25rem; }
   .split { gap: 1.35rem; }
   .forest-panel { border-radius: 28px; padding: 1.4rem; }

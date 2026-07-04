@@ -532,6 +532,7 @@
     const links = Array.isArray(siteContent.links) && siteContent.links.length ? siteContent.links : (typeof SITE_LINKS !== 'undefined' ? SITE_LINKS : []);
     const linkGrids = document.querySelectorAll('[data-link-grid]');
     linkGrids.forEach((grid) => {
+      grid.dataset.linkCount = String(Math.min(Math.max(links.length, 1), 5));
       grid.innerHTML = links.map((link) => `
         <a class="link-card reveal" href="${escapeHtml(safeUrl(link.url))}" target="_blank" rel="noopener">
           <span>${escapeHtml(link.type || '')}</span>
