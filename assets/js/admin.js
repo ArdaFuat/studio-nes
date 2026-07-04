@@ -122,7 +122,37 @@
 
   const isAllowedEmail = (email) => getAdminEmails().includes(String(email || '').trim().toLowerCase());
   const getPlatform = (value) => (SALES_PLATFORMS || []).find((item) => item.value === value) || SALES_PLATFORMS[0];
-  const getCategoryLabel = (value) => (ARTWORK_CATEGORIES || []).find((item) => item.value === value)?.label || value;
+  const normalizeCategoryOptions = (items = []) => {
+    const seen = new Set();
+    return (Array.isArray(items) ? items : [])
+      .map((item) => ({
+        value: String(typeof item === 'string' ? item : (item.value || '')).trim(),
+        label: String(typeof item === 'string' ? item : (item.label || item.value || '')).trim()
+      }))
+      .filter((item) => item.value && item.value !== 'all')
+      .filter((item) => {
+        if (seen.has(item.value)) return false;
+        seen.add(item.value);
+        return true;
+      });
+  };
+  const getGalleryCategoryOptions = (extraValue = '') => {
+    const merged = [];
+    const pushUnique = (item) => {
+      if (!item?.value || item.value === 'all' || merged.some((entry) => entry.value === item.value)) return;
+      merged.push(item);
+    };
+    normalizeCategoryOptions(siteContent?.gallery?.filters || []).forEach(pushUnique);
+    normalizeCategoryOptions(typeof ARTWORK_CATEGORIES !== 'undefined' ? ARTWORK_CATEGORIES : []).forEach(pushUnique);
+    const extra = String(extraValue || '').trim();
+    if (extra && !merged.some((item) => item.value === extra)) merged.push({ value: extra, label: extra });
+    return merged;
+  };
+  const refreshCategorySelect = (selected = '') => {
+    const current = selected || $('#category')?.value || 'doga';
+    fillSelect('#category', getGalleryCategoryOptions(current), current);
+  };
+  const getCategoryLabel = (value) => getGalleryCategoryOptions(value).find((item) => item.value === value)?.label || value;
   const getCollectionLabel = (value) => (ARTWORK_COLLECTIONS || []).find((item) => item.value === value)?.label || value;
 
   const normalizeArtwork = (art = {}, index = 0) => ({
@@ -373,6 +403,7 @@
     $('[data-form-title]').textContent = 'Ürünü düzenle';
     $('[data-submit-label]').textContent = 'Değişiklikleri Kaydet';
     $('#title').value = art.title || '';
+    refreshCategorySelect(art.category || 'doga');
     $('#category').value = art.category || 'doga';
     $('#collection').value = art.collection || 'ready';
     if ((ARTWORK_TECHNIQUES || []).includes(art.technique)) {
@@ -606,6 +637,7 @@
         <button class="btn ghost small-btn" type="button" data-add-repeat="contact.faqs">Soru Ekle</button>
       </details>`;
     renderRepeatManagers();
+    refreshCategorySelect();
   };
 
   const repeatConfig = {
@@ -861,9 +893,12 @@
     if (unsubscribeContent) unsubscribeContent();
     unsubscribeContent = db().collection(FIREBASE_CONTENT_COLLECTION).doc(FIREBASE_CONTENT_DOC)
       .onSnapshot((doc) => {
+        const selectedCategory = $('#category')?.value || editingSnapshot?.category || 'doga';
         siteContent = deepMerge(DEFAULT_SITE_CONTENT || {}, doc.exists ? doc.data() : {});
         renderPrimitiveContentFields();
+        refreshCategorySelect(selectedCategory);
         renderLinks();
+        renderList();
       }, (error) => setNotice(`Site yazıları okunamadı: ${error.message}`, 'error'));
   };
 
@@ -923,7 +958,7 @@
   };
 
   const init = () => {
-    fillSelect('#category', ARTWORK_CATEGORIES, 'doga');
+    refreshCategorySelect('doga');
     fillSelect('#collection', ARTWORK_COLLECTIONS, 'ready');
     fillSelect('#technique', ARTWORK_TECHNIQUES, 'Akrilik boya');
     fillSelect('#status', ARTWORK_STATUSES, 'Satılık');
@@ -1053,8 +1088,11 @@
       try {
         const next = readContentForm();
         next.links = readLinks();
+        siteContent = next;
+        refreshCategorySelect();
+        renderList();
         await saveContent(next);
-        setNotice('Site yazıları kaydedildi.', 'success');
+        setNotice('Site yazıları kaydedildi. Yeni kategoriler ürün formuna da aktarıldı.', 'success');
       } catch (error) {
         setNotice(`Site yazıları kaydedilemedi: ${error.message}`, 'error');
       }
@@ -1080,6 +1118,14 @@
         pathSet(siteContent, path, current);
         renderPrimitiveContentFields();
       }
+    });
+
+    $('[data-content-fields]')?.addEventListener('input', (event) => {
+      const changedCategoryField = event.target.closest('[data-content-repeat="gallery.filters"]');
+      if (!changedCategoryField) return;
+      siteContent = readContentForm();
+      refreshCategorySelect();
+      renderList();
     });
 
     $('[data-links-list]')?.addEventListener('input', () => {
