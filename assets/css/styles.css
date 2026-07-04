@@ -32,6 +32,39 @@ img { max-width: 100%; display: block; }
 a { color: inherit; text-decoration: none; }
 button { font: inherit; }
 
+
+/* Admin panelden gelen içerik yüklenmeden eski sabit yazı/görsel görünmesin.
+   Yazılı yükleme ekranı yok: içerik hazır olana kadar sayfa sadece temiz arka planda bekler. */
+body.content-pending {
+  overflow: hidden;
+}
+
+body.content-pending .site-header,
+body.content-pending main,
+body.content-pending .site-footer,
+body.content-pending dialog {
+  visibility: hidden;
+  opacity: 0;
+}
+
+body.content-pending::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  background:
+    radial-gradient(circle at 35% 18%, rgba(43, 101, 73, .18), transparent 24rem),
+    linear-gradient(180deg, #fffaf1 0%, var(--cream) 100%);
+}
+
+/* İçerik hazır olduğunda ekstra fade/animasyon yok.
+   Böylece cache -> Firebase güncellemesi sırasında çift gidip gelme hissi oluşmaz. */
+body.content-settled .site-header,
+body.content-settled main,
+body.content-settled .site-footer {
+  opacity: 1;
+}
+
 .site-header {
   position: sticky;
   top: 12px;

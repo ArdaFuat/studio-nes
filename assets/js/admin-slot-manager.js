@@ -49,6 +49,11 @@
 
   const defaults = () => clone(typeof DEFAULT_SITE_CONTENT !== 'undefined' ? DEFAULT_SITE_CONTENT : { home: {}, custom: {}, about: {} });
 
+  const csvToArray = (value) => String(value || '')
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+
   const isFirebaseConfigured = () => {
     try {
       return typeof firebase !== 'undefined' && typeof window.NESS_FIREBASE_IS_CONFIGURED === 'function' && window.NESS_FIREBASE_IS_CONFIGURED();
@@ -149,7 +154,9 @@
       .slot-manager-card .full-field { grid-column: 1 / -1; }
       .slot-artwork-picker { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: .65rem; }
       .slot-artwork-picker label { display: grid; grid-template-columns: auto 1fr; gap: .55rem; align-items: center; border: 1px solid rgba(34, 66, 46, .12); border-radius: 14px; padding: .65rem; background: #fffaf0; }
+      .slot-artwork-picker label img { width: 54px; height: 54px; border-radius: 10px; object-fit: cover; background: #f3eadb; }
       .slot-artwork-picker small { color: rgba(34, 66, 46, .65); }
+      .slot-picker-hint { margin: 0 0 .8rem; color: rgba(34, 66, 46, .72); }
     `;
     document.head.appendChild(style);
   };
@@ -160,10 +167,9 @@
     return (Array.isArray(slots) && slots.length ? slots : fallback).slice(0, 3);
   };
 
-  const getFeaturedSlots = () => {
-    const slots = siteContent?.home?.featuredSlots;
-    const fallback = window.NESS_DEFAULT_FEATURED_SLOTS || [];
-    return (Array.isArray(slots) && slots.length ? slots : fallback).slice(0, 3);
+  const publicArtworks = () => {
+    const visible = artworks.filter((art) => !art.hidden);
+    return visible.length ? visible : artworks;
   };
 
   const input = (label, attr, value = '', type = 'text', hint = '') => `
@@ -184,7 +190,7 @@
         ${input('Başlık', 'data-hero-field="title"', slot.title || '')}
         ${input('Küçük bilgi / teknik', 'data-hero-field="subtitle"', slot.subtitle || slot.meta || '')}
         ${input('Açıklama', 'data-hero-field="text"', slot.text || '', 'textarea')}
-        ${input('Görsel URL / yol', 'data-hero-field="image"', slot.image || '', 'text', 'İstersen URL yaz, istersen aşağıdan bilgisayardan seç.')}
+        ${input('Görsel URL / yol', 'data-hero-field="image"', slot.image || '', 'text', 'Buraya çerçevesiz / özel görsel koyabilirsin. Galeriden bağımsızdır.')}
         ${input('Alt yazı', 'data-hero-field="alt"', slot.alt || '')}
         <div class="two-col">
           ${input('Üst rozet küçük yazı', 'data-hero-field="badgeLabel"', slot.badgeLabel || 'öne çıkan tablo')}
@@ -199,41 +205,29 @@
     }).join('')}</div>`;
   };
 
-  const renderFeaturedPanel = () => {
-    const slots = getFeaturedSlots();
-    return `<div class="slot-grid">${[0, 1, 2].map((index) => {
-      const slot = slots[index] || {};
-      return `<article class="slot-card" data-featured-slot="${index}">
-        <h3>Öne çıkan kart ${index + 1}</h3>
-        <img data-featured-preview="${index}" src="${escapeHtml(safeUrl(slot.image) || 'assets/img/ness-logo.png')}" alt="Önizleme">
-        ${input('Başlık', 'data-featured-field="title"', slot.title || '')}
-        ${input('Meta / teknik / ölçü', 'data-featured-field="meta"', slot.meta || slot.subtitle || '')}
-        ${input('Kart açıklaması', 'data-featured-field="text"', slot.text || '', 'textarea')}
-        ${input('Detay açıklaması', 'data-featured-field="detail"', slot.detail || '', 'textarea')}
-        ${input('Görsel URL / yol', 'data-featured-field="image"', slot.image || '')}
-        ${input('Alt yazı', 'data-featured-field="alt"', slot.alt || '')}
-        <div class="two-col">
-          ${input('Durum rozeti', 'data-featured-field="status"', slot.status || '')}
-          ${input('Fiyat / kısa bilgi', 'data-featured-field="price"', slot.price || '')}
-        </div>
-        <div class="two-col">
-          ${input('Buton yazısı', 'data-featured-field="buttonLabel"', slot.buttonLabel || 'Detay')}
-          ${input('Buton linki', 'data-featured-field="url"', slot.url || '')}
-        </div>
-        <label class="upload-box">Bilgisayardan görsel seç<input type="file" accept="image/*" data-featured-file="${index}"></label>
-      </article>`;
-    }).join('')}</div>`;
+  const renderFeaturedPicker = () => {
+    const selected = csvToArray(siteContent?.home?.featuredArtworkIds || 'white-lilies, orman, kirlar');
+    const items = publicArtworks();
+    if (!items.length) return '<p class="muted-box">Ürün listesi henüz gelmedi. Önce galeri ürünlerini aktar veya ekle.</p>';
+    return `
+      <p class="slot-picker-hint">Buradaki seçimler ana sayfadaki “Galeriden seçilen tablolar” bölümünü belirler. Kart görseli, fiyatı ve Shopier/Shopify linki galerideki ürün bilgisinden gelir. En fazla 3 ürün seç.</p>
+      <div class="slot-artwork-picker">${items.map((art) => `
+        <label>
+          <input type="checkbox" data-featured-art-id="${escapeHtml(art.id)}" ${selected.includes(art.id) ? 'checked' : ''}>
+          <img src="${escapeHtml(safeUrl(art.image) || 'assets/img/ness-logo.png')}" alt="${escapeHtml(art.title || '')}">
+          <span><strong>${escapeHtml(art.title || '')}</strong><br><small>ID: ${escapeHtml(art.id)} · ${escapeHtml(art.sourceLabel || art.collection || '')}</small></span>
+        </label>`).join('')}</div>`;
   };
 
   const renderCustomPicker = () => {
-    const selected = String(siteContent?.custom?.customArtworkIds || '').split(',').map((item) => item.trim()).filter(Boolean);
-    const publicArtworks = artworks.filter((art) => !art.hidden);
-    const items = publicArtworks.length ? publicArtworks : artworks;
+    const selected = csvToArray(siteContent?.custom?.customArtworkIds || '');
+    const items = publicArtworks();
     if (!items.length) return '<p class="muted-box">Ürün listesi henüz gelmedi. Önce galeri ürünlerini aktar veya ekle.</p>';
     return `<div class="slot-artwork-picker">${items.map((art) => `
       <label>
         <input type="checkbox" data-custom-art-id="${escapeHtml(art.id)}" ${selected.includes(art.id) ? 'checked' : ''}>
-        <span><strong>${escapeHtml(art.title)}</strong><br><small>ID: ${escapeHtml(art.id)} · ${escapeHtml(art.collection || '')}</small></span>
+        <img src="${escapeHtml(safeUrl(art.image) || 'assets/img/ness-logo.png')}" alt="${escapeHtml(art.title || '')}">
+        <span><strong>${escapeHtml(art.title || '')}</strong><br><small>ID: ${escapeHtml(art.id)} · ${escapeHtml(art.collection || '')}</small></span>
       </label>`).join('')}</div>`;
   };
 
@@ -256,12 +250,12 @@
     host.innerHTML = `
       <div class="slot-tabs" role="tablist">
         <button type="button" class="active" data-slot-tab="hero">Ana slider 3 görsel</button>
-        <button type="button" data-slot-tab="featured">Ana sayfa 3 kart</button>
+        <button type="button" data-slot-tab="featured">Galeriden seçilen tablolar</button>
         <button type="button" data-slot-tab="custom">Özel sipariş seçimleri</button>
         <button type="button" data-slot-tab="about">Hakkında görseli</button>
       </div>
       <div class="slot-panel" data-slot-panel="hero">${renderHeroPanel()}</div>
-      <div class="slot-panel" data-slot-panel="featured" hidden>${renderFeaturedPanel()}</div>
+      <div class="slot-panel" data-slot-panel="featured" hidden>${renderFeaturedPicker()}</div>
       <div class="slot-panel" data-slot-panel="custom" hidden>${renderCustomPicker()}</div>
       <div class="slot-panel" data-slot-panel="about" hidden>${renderAboutPanel()}</div>
       <div class="slot-actions"><button class="btn primary" type="button" data-save-slots>Görsel Slotlarını Kaydet</button></div>`;
@@ -276,7 +270,7 @@
       <div class="admin-section-title row-title">
         <div>
           <h2>Görsel slotları</h2>
-          <p>Ana sayfadaki slider ve üç kart galeriden bağımsızdır. Özel sipariş kısmı ise galeriden seçilir.</p>
+          <p>Ana slider çerçevesiz özel görsellerle çalışır. “Galeriden seçilen tablolar” ve özel sipariş bölümleri galerideki ürünlerden seçilir; satış linkleri korunur.</p>
         </div>
       </div>
       <div data-slot-manager-body><p class="muted-box">Yükleniyor...</p></div>`;
@@ -292,15 +286,16 @@
     return slot;
   }).filter((slot) => slot.title || slot.image);
 
-  const readFeaturedSlots = () => $$('[data-featured-slot]').map((card) => {
-    const slot = {};
-    card.querySelectorAll('[data-featured-field]').forEach((field) => { slot[field.dataset.featuredField] = field.value.trim(); });
-    slot.image = safeUrl(slot.image) || '';
-    slot.url = safeUrl(slot.url) || '';
-    return slot;
-  }).filter((slot) => slot.title || slot.image);
+  const readFeaturedArtworkIds = () => $$('[data-featured-art-id]:checked')
+    .map((input) => input.dataset.featuredArtId)
+    .filter(Boolean)
+    .slice(0, 3)
+    .join(', ');
 
-  const readCustomArtworkIds = () => $$('[data-custom-art-id]:checked').map((input) => input.dataset.customArtId).join(', ');
+  const readCustomArtworkIds = () => $$('[data-custom-art-id]:checked')
+    .map((input) => input.dataset.customArtId)
+    .filter(Boolean)
+    .join(', ');
 
   const readAbout = () => ({
     image: safeUrl($('[data-about-image]')?.value || '') || '',
@@ -314,7 +309,7 @@
       next.custom = next.custom || {};
       next.about = next.about || {};
       next.home.heroSlots = readHeroSlots();
-      next.home.featuredSlots = readFeaturedSlots();
+      next.home.featuredArtworkIds = readFeaturedArtworkIds();
       next.custom.customArtworkIds = readCustomArtworkIds();
       const about = readAbout();
       if (about.image) next.about.image = about.image;
@@ -322,9 +317,9 @@
       next.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
       next.updatedBy = firebase.auth().currentUser?.email || '';
       await firebase.firestore().collection(FIREBASE_CONTENT_COLLECTION).doc(FIREBASE_CONTENT_DOC).set(next, { merge: true });
-      setNotice('Görsel slotları kaydedildi. Ana sayfa canlı olarak güncellenir.', 'success');
+      setNotice('Görsel seçimleri kaydedildi. Ana slider ayrı, seçilen tablolar ise galeriden gelmeye devam eder.', 'success');
     } catch (error) {
-      setNotice(`Görsel slotları kaydedilemedi: ${error.message}`, 'error');
+      setNotice(`Görsel seçimleri kaydedilemedi: ${error.message}`, 'error');
     }
   };
 
@@ -351,18 +346,12 @@
 
     document.addEventListener('change', async (event) => {
       const heroFile = event.target.closest('[data-hero-file]');
-      const featuredFile = event.target.closest('[data-featured-file]');
       const aboutFile = event.target.closest('[data-about-file]');
       try {
         if (heroFile) {
           const index = heroFile.dataset.heroFile;
           await setFileResult(heroFile.files?.[0], `[data-hero-slot="${index}"] [data-hero-field="image"]`, `[data-hero-preview="${index}"]`);
           heroFile.value = '';
-        }
-        if (featuredFile) {
-          const index = featuredFile.dataset.featuredFile;
-          await setFileResult(featuredFile.files?.[0], `[data-featured-slot="${index}"] [data-featured-field="image"]`, `[data-featured-preview="${index}"]`);
-          featuredFile.value = '';
         }
         if (aboutFile) {
           await setFileResult(aboutFile.files?.[0], '[data-about-image]', '[data-about-preview]', { targetBytes: 130 * 1024, hardLimitBytes: 170 * 1024, maxSide: 1200, quality: 0.74 });
@@ -376,17 +365,11 @@
 
     document.addEventListener('input', (event) => {
       const heroImage = event.target.closest('[data-hero-field="image"]');
-      const featuredImage = event.target.closest('[data-featured-field="image"]');
       const aboutImage = event.target.closest('[data-about-image]');
       if (heroImage) {
         const index = heroImage.closest('[data-hero-slot]')?.dataset.heroSlot;
         const preview = $(`[data-hero-preview="${index}"]`);
         if (preview) preview.src = safeUrl(heroImage.value) || 'assets/img/ness-logo.png';
-      }
-      if (featuredImage) {
-        const index = featuredImage.closest('[data-featured-slot]')?.dataset.featuredSlot;
-        const preview = $(`[data-featured-preview="${index}"]`);
-        if (preview) preview.src = safeUrl(featuredImage.value) || 'assets/img/ness-logo.png';
       }
       if (aboutImage) {
         const preview = $('[data-about-preview]');

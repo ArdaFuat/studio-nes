@@ -12,6 +12,79 @@
   let sliderCleanup = null;
   let revealObserver = null;
   let fairLightboxState = { images: [], index: 0, title: '' };
+  const PUBLIC_CACHE_KEY = 'studio-nes-public-cache-v4';
+  let hasPaintedOnce = false;
+  let lastRenderSignature = '';
+
+
+  const readPublicCache = () => {
+    try {
+      const raw = window.localStorage?.getItem(PUBLIC_CACHE_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== 'object') return null;
+      return parsed;
+    } catch (_) {
+      return null;
+    }
+  };
+
+  const writePublicCache = () => {
+    try {
+      const payload = {
+        cachedAt: new Date().toISOString(),
+        siteContent,
+        artworks: normalizeArtworks(currentArtworks).slice(0, 80),
+        fairs: normalizeFairs(currentFairs).slice(0, 40)
+      };
+      window.localStorage?.setItem(PUBLIC_CACHE_KEY, JSON.stringify(payload));
+    } catch (_) {
+      // localStorage doluysa site normal şekilde Firebase'den devam eder.
+    }
+  };
+
+  const hasUsefulCache = (cache) => Boolean(
+    cache && (
+      cache.siteContent ||
+      (Array.isArray(cache.artworks) && cache.artworks.length) ||
+      (Array.isArray(cache.fairs) && cache.fairs.length)
+    )
+  );
+
+  const markSiteReady = () => {
+    const body = document.body;
+    if (!body) return;
+    hasPaintedOnce = true;
+    window.requestAnimationFrame(() => {
+      body.classList.remove('content-pending');
+      body.classList.add('content-settled');
+      observeReveals();
+    });
+  };
+
+  const stableStringify = (value) => {
+    const seen = new WeakSet();
+    return JSON.stringify(value, (key, val) => {
+      if (key === 'updatedAt' || key === 'updatedBy') return undefined;
+      if (val && typeof val === 'object') {
+        if (seen.has(val)) return undefined;
+        seen.add(val);
+        if (!Array.isArray(val)) {
+          return Object.keys(val).sort().reduce((acc, itemKey) => {
+            acc[itemKey] = val[itemKey];
+            return acc;
+          }, {});
+        }
+      }
+      return val;
+    });
+  };
+
+  const getRenderSignature = () => stableStringify({
+    siteContent,
+    artworks: normalizeArtworks(currentArtworks).map(({ updatedAt, updatedBy, ...art }) => art),
+    fairs: normalizeFairs(currentFairs).map(({ updatedAt, updatedBy, ...fair }) => fair)
+  });
 
   function clone(value) {
     if (value === undefined || value === null) return value;
@@ -226,16 +299,38 @@
 
   const observeReveals = () => {
     if (revealObserver) revealObserver.disconnect();
+    const revealNodes = document.querySelectorAll('.reveal');
     if (!('IntersectionObserver' in window)) {
-      document.querySelectorAll('.reveal').forEach((el) => el.classList.add('visible'));
+      revealNodes.forEach((el) => el.classList.add('visible'));
       return;
     }
+
     revealObserver = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
-        if (entry.isIntersecting) entry.target.classList.add('visible');
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          revealObserver?.unobserve(entry.target);
+        }
       });
-    }, { threshold: 0.12 });
-    document.querySelectorAll('.reveal').forEach((el) => revealObserver.observe(el));
+    }, { threshold: 0.12, rootMargin: '0px 0px -6% 0px' });
+
+    revealNodes.forEach((el) => {
+      if (el.classList.contains('visible')) return;
+
+      // Cache/Firebase sessiz güncellemesi ilk görünür alanda yeniden çizim yaparsa
+      // o alanı direkt görünür bırakıyoruz; aşağıdaki elemanlar yine scroll ile
+      // yavaş yavaş gelmeye devam ediyor.
+      if (hasPaintedOnce) {
+        const rect = el.getBoundingClientRect();
+        const alreadyPassedOrVisible = rect.top < window.innerHeight * 0.92;
+        if (alreadyPassedOrVisible) {
+          el.classList.add('visible');
+          return;
+        }
+      }
+
+      revealObserver.observe(el);
+    });
   };
 
   const renderArtworkCard = (art) => {
@@ -290,6 +385,27 @@
     });
   };
 
+  const getIndependentHeroSlides = () => {
+    const defaults = (typeof window !== 'undefined' && Array.isArray(window.NESS_DEFAULT_HERO_SLOTS)) ? window.NESS_DEFAULT_HERO_SLOTS : [];
+    const configured = Array.isArray(siteContent?.home?.heroSlots) && siteContent.home.heroSlots.length ? siteContent.home.heroSlots : defaults;
+    return configured.slice(0, 3).map((slot, index) => {
+      const image = safeUrl(slot.image || '');
+      if (!image) return null;
+      return {
+        id: `hero-slot-${index}`,
+        title: slot.title || `Görsel ${index + 1}`,
+        image,
+        heroAlt: slot.alt || slot.title || `Studio Nes görsel ${index + 1}`,
+        heroTag: slot.subtitle || slot.meta || '',
+        short: slot.text || slot.short || '',
+        heroBadgeLabel: slot.badgeLabel || 'öne çıkan tablo',
+        heroBadgeText: slot.badgeText || slot.title || '',
+        heroMetaLabel: slot.metaLabel || 'koleksiyon',
+        heroMetaText: slot.metaText || slot.subtitle || slot.meta || ''
+      };
+    }).filter(Boolean);
+  };
+
   const initHeroSlider = (publicArtworks) => {
     if (sliderCleanup) {
       sliderCleanup();
@@ -299,13 +415,16 @@
     const heroSlider = document.querySelector('[data-hero-slider]');
     if (!heroSlider) return;
 
-    const slideIds = csvToArray(pathGet(siteContent, 'home.heroSlideArtworkIds', 'white-lilies, orman, kirlar'));
-    let slides = findByIds(publicArtworks, slideIds, getHomeArtworks(publicArtworks));
-    if (!slides.length && typeof HERO_HOME_SLIDES !== 'undefined' && Array.isArray(HERO_HOME_SLIDES)) {
-      slides = HERO_HOME_SLIDES.map((item) => {
-        const art = publicArtworks.find((entry) => entry.id === item.artId);
-        return art ? { ...art, image: item.image || art.image } : null;
-      }).filter(Boolean);
+    let slides = getIndependentHeroSlides();
+    if (!slides.length) {
+      const slideIds = csvToArray(pathGet(siteContent, 'home.heroSlideArtworkIds', 'white-lilies, orman, kirlar'));
+      slides = findByIds(publicArtworks, slideIds, getHomeArtworks(publicArtworks));
+      if (!slides.length && typeof HERO_HOME_SLIDES !== 'undefined' && Array.isArray(HERO_HOME_SLIDES)) {
+        slides = HERO_HOME_SLIDES.map((item) => {
+          const art = publicArtworks.find((entry) => entry.id === item.artId);
+          return art ? { ...art, image: item.image || art.image } : null;
+        }).filter(Boolean);
+      }
     }
 
     const track = heroSlider.querySelector('[data-hero-slider-track]');
@@ -321,10 +440,10 @@
 
     track.innerHTML = slides.map((art, index) => `
       <article class="hero-slide" aria-hidden="${index === 0 ? 'false' : 'true'}">
-        <img src="${escapeHtml(safeUrl(art.image) || 'assets/img/ness-logo.png')}" alt="${escapeHtml(art.title)} - ${escapeHtml(art.technique)}" ${index === 0 ? 'fetchpriority="high"' : 'loading="lazy"'} />
+        <img src="${escapeHtml(safeUrl(art.image) || 'assets/img/ness-logo.png')}" alt="${escapeHtml(art.heroAlt || `${art.title} - ${art.technique || ''}`)}" ${index === 0 ? 'fetchpriority="high"' : 'loading="lazy"'} />
         <div class="hero-slide-copy">
           <div>
-            <span class="hero-slide-tag">${escapeHtml(art.technique)} · ${escapeHtml(art.size)}</span>
+            <span class="hero-slide-tag">${escapeHtml(art.heroTag || [art.technique, art.size].filter(Boolean).join(' · '))}</span>
             <h3>${escapeHtml(art.title)}</h3>
             <p>${escapeHtml(art.short)}</p>
           </div>
@@ -346,8 +465,8 @@
         dot.classList.toggle('active', index === activeIndex);
         dot.setAttribute('aria-current', index === activeIndex ? 'true' : 'false');
       });
-      if (titleCard) titleCard.innerHTML = `<span>öne çıkan tablo</span><strong>${escapeHtml(activeArt.title)}</strong>`;
-      if (metaCard) metaCard.innerHTML = `<span>koleksiyon</span><strong>${escapeHtml(activeArt.size)} tuvaller</strong>`;
+      if (titleCard) titleCard.innerHTML = `<span>${escapeHtml(activeArt.heroBadgeLabel || 'öne çıkan tablo')}</span><strong>${escapeHtml(activeArt.heroBadgeText || activeArt.title)}</strong>`;
+      if (metaCard) metaCard.innerHTML = `<span>${escapeHtml(activeArt.heroMetaLabel || 'koleksiyon')}</span><strong>${escapeHtml(activeArt.heroMetaText || (activeArt.size ? `${activeArt.size} tuvaller` : ''))}</strong>`;
     };
 
     const stopAuto = () => { if (autoTimer) window.clearInterval(autoTimer); };
@@ -512,7 +631,11 @@
     observeReveals();
   };
 
-  const renderAllContent = () => {
+  const renderAllContent = ({ force = false } = {}) => {
+    const signature = getRenderSignature();
+    if (!force && signature && signature === lastRenderSignature) return false;
+    lastRenderSignature = signature;
+
     renderTextContent();
     renderGalleryFilters();
     renderProcessGrid();
@@ -522,6 +645,7 @@
     renderFairs(currentFairs);
     renderPageArtworks(currentArtworks);
     observeReveals();
+    return true;
   };
 
   const setupRealtime = () => {
@@ -532,20 +656,21 @@
         .onSnapshot((snapshot) => {
           if (snapshot.empty) return;
           const items = snapshot.docs.map((doc, index) => normalizeArtwork({ id: doc.id, ...doc.data() }, index));
-          renderPageArtworks(items);
+          currentArtworks = normalizeArtworks(items);
+          if (renderAllContent()) writePublicCache();
         }, (error) => console.warn('Firebase ürün canlı takip kapandı:', error));
 
       firebase.firestore().collection(FIREBASE_CONTENT_COLLECTION).doc(FIREBASE_CONTENT_DOC)
         .onSnapshot((doc) => {
           if (!doc.exists) return;
           siteContent = deepMerge(typeof DEFAULT_SITE_CONTENT !== 'undefined' ? DEFAULT_SITE_CONTENT : {}, doc.data());
-          renderAllContent();
+          if (renderAllContent()) writePublicCache();
         }, (error) => console.warn('Firebase site içeriği canlı takip kapandı:', error));
 
       firebase.firestore().collection(FIREBASE_FAIRS_COLLECTION).orderBy('order', 'asc')
         .onSnapshot((snapshot) => {
-          currentFairs = snapshot.docs.map((doc, index) => normalizeFair({ id: doc.id, ...doc.data() }, index));
-          renderFairs(currentFairs);
+          currentFairs = normalizeFairs(snapshot.docs.map((doc, index) => normalizeFair({ id: doc.id, ...doc.data() }, index)));
+          if (renderAllContent()) writePublicCache();
         }, (error) => console.warn('Firebase fuar canlı takip kapandı:', error));
     } catch (error) {
       console.warn('Firebase canlı takip başlatılamadı:', error);
@@ -581,6 +706,8 @@
   };
 
   const setupDialogsAndClicks = () => {
+    if (window.NESS_PUBLIC_DIALOGS_READY) return;
+    window.NESS_PUBLIC_DIALOGS_READY = true;
     const dialog = document.querySelector('[data-art-dialog]');
     const dialogBody = document.querySelector('[data-dialog-body]');
     const closeDialog = document.querySelector('[data-close-dialog]');
@@ -652,6 +779,20 @@
     }
   };
 
+  const applyLoadedState = (loadedContent, loadedFairs, loadedArtworks, { force = false } = {}) => {
+    siteContent = loadedContent;
+    currentFairs = loadedFairs;
+    currentArtworks = loadedArtworks;
+    const didRender = renderAllContent({ force });
+    if (didRender) writePublicCache();
+    return didRender;
+  };
+
+  const loadLiveState = async () => {
+    const [loadedContent, loadedFairs, loadedArtworks] = await Promise.all([loadContent(), loadFairs(), loadArtworks()]);
+    return { loadedContent, loadedFairs, loadedArtworks };
+  };
+
   const init = async () => {
     const navToggle = document.querySelector('[data-nav-toggle]');
     const nav = document.querySelector('[data-nav]');
@@ -662,12 +803,44 @@
       });
     }
 
-    siteContent = await loadContent();
-    currentFairs = await loadFairs();
-    currentArtworks = await loadArtworks();
-    renderAllContent();
-    setupRealtime();
-    setupDialogsAndClicks();
+    const defaults = typeof DEFAULT_SITE_CONTENT !== 'undefined' ? DEFAULT_SITE_CONTENT : {};
+    const cached = readPublicCache();
+    let paintedFromCache = false;
+
+    if (hasUsefulCache(cached)) {
+      siteContent = deepMerge(defaults, cached.siteContent || {});
+      currentFairs = normalizeFairs(Array.isArray(cached.fairs) ? cached.fairs : []);
+      currentArtworks = normalizeArtworks(
+        Array.isArray(cached.artworks) && cached.artworks.length
+          ? cached.artworks
+          : (typeof ARTWORKS !== 'undefined' ? ARTWORKS : [])
+      );
+      renderAllContent({ force: true });
+      setupDialogsAndClicks();
+      markSiteReady();
+      paintedFromCache = true;
+    }
+
+    try {
+      const { loadedContent, loadedFairs, loadedArtworks } = await loadLiveState();
+      applyLoadedState(loadedContent, loadedFairs, loadedArtworks, { force: !paintedFromCache });
+      if (!paintedFromCache) {
+        setupDialogsAndClicks();
+        markSiteReady();
+      }
+    } catch (error) {
+      console.warn('Site içeriği hazırlanırken hata oluştu:', error);
+      if (!paintedFromCache) {
+        siteContent = deepMerge(defaults, siteContent || {});
+        currentFairs = normalizeFairs(currentFairs);
+        currentArtworks = normalizeArtworks(currentArtworks.length ? currentArtworks : (typeof ARTWORKS !== 'undefined' ? ARTWORKS : []));
+        renderAllContent({ force: true });
+        setupDialogsAndClicks();
+        markSiteReady();
+      }
+    } finally {
+      setupRealtime();
+    }
   };
 
   init();

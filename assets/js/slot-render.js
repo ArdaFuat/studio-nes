@@ -227,7 +227,8 @@
   const renderSlots = (content) => {
     latestContent = content || latestContent || getDefaults();
     renderHeroSlots(latestContent);
-    renderFeaturedSlots(latestContent);
+    // Galeriden seçilen tablolar kısmını tekrar ana ürün sistemi çiziyor.
+    // Böylece galerideki görseller, fiyatlar ve Shopier/Shopify linkleri korunur.
     setupSlotDialog();
   };
 

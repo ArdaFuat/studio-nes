@@ -41,3 +41,16 @@ site-adresin.netlify.app/admin.html
 
 GÜNCEL NOT:
 Bu sürüm Firebase Storage kullanmaz. Admin panelde bilgisayardan görsel seçebilirsin; görsel tarayıcıda küçültülüp Firestore kaydına eklenir. Çok büyük görselde hata verirse daha küçük JPG seç. Çok fazla fuar fotoğrafı için direkt .jpg/.png/.webp URL kullanmak daha sağlıklıdır.
+
+
+Görsel slotları notu
+--------------------
+- Ana sayfanın üst slider görselleri galeriden bağımsızdır; admin panelde Görsel slotları > Ana slider 3 görsel alanından çerçevesiz/özel görsel seçilebilir.
+- Ana sayfadaki "Galeriden seçilen tablolar" bölümü tekrar galerideki ürün kartlarından gelir. Bu yüzden ürün görseli, fiyatı ve Shopier/Shopify bağlantısı galerideki ürün kaydından otomatik korunur.
+- Bu bölümde hangi 3 ürünün görüneceğini admin panelde Görsel slotları > Galeriden seçilen tablolar sekmesinden seçebilirsin.
+
+
+2026-07-04 düzeltmesi:
+- Sayfa açılırken HTML içindeki eski sabit yazı/görsel artık görünmez.
+- Site önce admin/Firebase içeriğini hazırlar, sonra tek seferde görünür hale gelir.
+- Ana sayfa üst slider çerçevesiz görsel slotlarından gelir; “Galeriden seçilen tablolar” ise tekrar galeri ürünlerinden ve satış linklerinden gelir.
