@@ -1,5 +1,6 @@
 (function () {
-  const JOURNEY_COLLECTION = 'journeys';
+  const JOURNEY_COLLECTION = 'siteContent';
+  const JOURNEY_DOC = 'journeys';
   const ARTWORK_COLLECTION = 'artworks';
   let journeyByCity = new Map();
   let artworkById = new Map();
@@ -249,8 +250,8 @@
       const db = firebase.firestore();
       unsubscribeJourneys?.();
       unsubscribeArtworks?.();
-      unsubscribeJourneys = db.collection(JOURNEY_COLLECTION).onSnapshot((snapshot) => {
-        setJourneys(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+      unsubscribeJourneys = db.collection(JOURNEY_COLLECTION).doc(JOURNEY_DOC).onSnapshot((snapshot) => {
+        setJourneys(snapshot.exists ? snapshot.data()?.items : []);
       }, (error) => console.warn('Rotamız şehirleri canlı olarak okunamadı:', error));
       unsubscribeArtworks = db.collection(ARTWORK_COLLECTION).orderBy('order', 'asc').onSnapshot((snapshot) => {
         setArtworks(snapshot.docs.map((doc, index) => ({ id: doc.id, ...doc.data(), order: doc.data().order ?? index })));

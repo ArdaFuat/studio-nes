@@ -70,3 +70,8 @@ Görsel slotları notu
 2026-07-22 Gerçek harita geometrisi düzeltmesi:
 - Kullanıcının gönderdiği MIT lisanslı SVG Türkiye Haritası kullanıldı.
 - Önceki yaklaşık il şekilleri kaldırıldı; gerçek il sınırları ve doğru Türkiye silüeti yerel olarak pakete gömüldü.
+
+
+ROTAMIZ FIRESTORE NOTU
+----------------------
+Rota ve şehir-tablo eşleştirmeleri siteContent/journeys belgesinde tutulur. Mevcut siteContent Firestore izni yeterlidir; journeys adında ayrı koleksiyon kuralı gerekmez.

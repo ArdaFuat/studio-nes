@@ -1,5 +1,6 @@
 (function () {
-  const JOURNEY_COLLECTION = 'journeys';
+  const JOURNEY_COLLECTION = 'siteContent';
+  const JOURNEY_DOC = 'journeys';
   const ARTWORK_COLLECTION = 'artworks';
   const TOTAL_CITIES = 81;
   let journeyByCity = new Map();
@@ -170,35 +171,6 @@
     }
   };
 
-  const commitDeletes = async (docs) => {
-    for (let start = 0; start < docs.length; start += 400) {
-      const batch = db().batch();
-      docs.slice(start, start + 400).forEach((doc) => batch.delete(doc.ref));
-      await batch.commit();
-    }
-  };
-
-  const commitRecords = async (records) => {
-    for (let start = 0; start < records.length; start += 400) {
-      const batch = db().batch();
-      records.slice(start, start + 400).forEach((record) => {
-        const city = cities().find((item) => item.name === record.city);
-        if (!city) return;
-        const ref = db().collection(JOURNEY_COLLECTION).doc(`city-${String(city.id).padStart(2, '0')}`);
-        batch.set(ref, {
-          city: city.name,
-          visible: true,
-          order: city.id,
-          disclosure: record.disclosure === 'private' ? 'private' : 'public',
-          artworkIds: [...new Set(record.artworkIds || [])],
-          updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-          updatedBy: currentUser?.email || ''
-        });
-      });
-      await batch.commit();
-    }
-  };
-
   const saveRecords = async (records, successMessage = 'Rotamız kaydedildi. Harita canlı olarak güncellenecek.') => {
     if (!currentUser) throw new Error('Bu işlem için admin girişi gerekli.');
     if (isSaving) return;
@@ -208,9 +180,17 @@
       const next = cities()
         .filter((city) => normalized.has(city.name))
         .map((city) => ({ ...normalized.get(city.name), order: city.id }));
-      const snapshot = await db().collection(JOURNEY_COLLECTION).get();
-      await commitDeletes(snapshot.docs);
-      await commitRecords(next);
+      await db().collection(JOURNEY_COLLECTION).doc(JOURNEY_DOC).set({
+        items: next.map((record) => ({
+          city: record.city,
+          visible: true,
+          order: record.order,
+          disclosure: record.disclosure === 'private' ? 'private' : 'public',
+          artworkIds: [...new Set(record.artworkIds || [])]
+        })),
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        updatedBy: currentUser?.email || ''
+      });
       journeyByCity = new Map(next.map((item) => [item.city, item]));
       render();
       notice(successMessage, 'success');
@@ -222,10 +202,10 @@
   const watch = () => {
     unsubscribeItems?.();
     unsubscribeArtworks?.();
-    unsubscribeItems = db().collection(JOURNEY_COLLECTION).onSnapshot((snapshot) => {
-      journeyByCity = normalizeJourneyItems(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+    unsubscribeItems = db().collection(JOURNEY_COLLECTION).doc(JOURNEY_DOC).onSnapshot((snapshot) => {
+      journeyByCity = normalizeJourneyItems(snapshot.exists ? snapshot.data()?.items : []);
       render();
-    }, (error) => notice(`Şehirler okunamadı: ${error.message}`, 'error'));
+    }, (error) => notice(`Rota bilgileri okunamadı: ${error.message}`, 'error'));
     unsubscribeArtworks = db().collection(ARTWORK_COLLECTION).orderBy('order', 'asc').onSnapshot((snapshot) => {
       artworks = normalizeArtworks(snapshot.docs.map((doc, index) => ({ id: doc.id, ...doc.data(), order: doc.data().order ?? index })));
       renderCityDetails();

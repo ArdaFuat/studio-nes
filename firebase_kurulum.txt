@@ -3,6 +3,7 @@ FIREBASE KURULUMU - NESS ART CANLI ADMIN (STORAGE YOK)
 
 Bu sürümde Firebase Storage kullanılmaz. Ürün, site yazıları, bağlantılar, fuarlar ve ulaşılan şehir seçimleri Firestore'a kaydedilir.
 Ürün ve fuar görselleri admin panelinden yönetilir. Rotamız bölümünde şehir seçimi yapılır; her şehir galerideki tablolarla eşleştirilebilir veya eser bilgisi gizli tutulabilir.
+Rotamız verileri ayrı bir journeys koleksiyonu yerine mevcut izinli siteContent/journeys belgesinde tutulur. Böylece ek Firestore kuralı gerekmez.
 
 1) Firebase projesi
 -------------------
@@ -55,11 +56,6 @@ service cloud.firestore {
     }
 
     match /fairs/{fairId} {
-      allow read: if true;
-      allow create, update, delete: if isAdmin();
-    }
-
-    match /journeys/{journeyId} {
       allow read: if true;
       allow create, update, delete: if isAdmin();
     }
