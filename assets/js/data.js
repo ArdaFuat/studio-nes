@@ -218,6 +218,8 @@ const DEFAULT_SITE_CONTENT = {
     home: "Ana Sayfa",
     gallery: "Galeri",
     fairs: "Fuarlar",
+    reachedCities: "Ulaşılan Şehirler",
+    route: "Rotamız",
     custom: "Özel Sipariş",
     about: "Hakkında",
     contact: "İletişim"
@@ -273,6 +275,20 @@ const DEFAULT_SITE_CONTENT = {
     emptyText: "Katılım yapılan fuarlar, sergi bilgileri ve stant fotoğrafları hazır olduğunda bu alanda yayınlanacaktır.",
     emptyItems: "Etkinlik adı ve konumu\nKatılım tarihi\nSergilenen işler\nStanttan fotoğraflar"
   },
+  reachedCities: {
+    eyebrow: "Studio Nes Türkiye Haritası",
+    title: "Ulaşılan Şehirler",
+    intro: "Tablolarımızın Türkiye'de hayat bulduğu şehirler.",
+    counterLabel: "ulaşılan şehir",
+    mapHint: "Renkli bir şehre dokunarak oradaki tabloyu görebilirsin."
+  },
+  route: {
+    eyebrow: "Studio Nes Türkiye Haritası",
+    title: "Rotamız",
+    intro: "Tablolarımızın Türkiye'de hayat bulduğu şehirler.",
+    counterLabel: "ulaşılan şehir",
+    mapHint: "Renkli bir şehre dokunarak oradaki tabloyu görebilirsin."
+  },
   custom: {
     eyebrow: "Özel Sipariş",
     title: "Size özel renklerde, ölçülerde ve temalarda tuval çalışması.",
@@ -322,4 +338,5 @@ const DEFAULT_SITE_CONTENT = {
 };
 
 const DEFAULT_FAIRS = [];
+const DEFAULT_JOURNEYS = [];
 

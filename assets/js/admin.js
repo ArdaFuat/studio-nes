@@ -536,7 +536,7 @@
   };
 
   const exportJson = () => {
-    const payload = JSON.stringify({ updatedAt: new Date().toISOString(), artworks: normalizeArtworks(artworks), siteContent, fairs: normalizeFairs(fairs) }, null, 2);
+    const payload = JSON.stringify({ updatedAt: new Date().toISOString(), artworks: normalizeArtworks(artworks), siteContent, fairs: normalizeFairs(fairs), journeys: window.NESS_JOURNEY_MANAGER?.getItems?.() || [] }, null, 2);
     const blob = new Blob([payload], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -568,6 +568,7 @@
       if (Array.isArray(items)) await writeManyToFirebase(items, 'merge');
       if (parsed.siteContent) await saveContent(parsed.siteContent);
       if (Array.isArray(parsed.fairs)) await writeManyFairs(parsed.fairs, 'merge');
+      if (Array.isArray(parsed.journeys) && window.NESS_JOURNEY_MANAGER?.importItems) await window.NESS_JOURNEY_MANAGER.importItems(parsed.journeys);
       clearForm();
       setNotice('Yedek içe aktarıldı. İçerikler canlı sitede görünür.', 'success');
     } catch (error) {
@@ -588,7 +589,7 @@
 
   const CONTENT_FIELDS = [
     { title: 'Menü & alt bilgi', fields: [
-      ['nav.home', 'Menü: Ana sayfa'], ['nav.gallery', 'Menü: Galeri'], ['nav.fairs', 'Menü: Fuarlar'], ['nav.custom', 'Menü: Özel Sipariş'], ['nav.about', 'Menü: Hakkında'], ['nav.contact', 'Menü: İletişim'], ['footer.tagline', 'Footer kısa yazı'], ['footer.copyrightSuffix', 'Telif yazısı']
+      ['nav.home', 'Menü: Ana sayfa'], ['nav.gallery', 'Menü: Galeri'], ['nav.fairs', 'Menü: Fuarlar'], ['nav.route', 'Menü: Rotamız'], ['nav.custom', 'Menü: Özel Sipariş'], ['nav.about', 'Menü: Hakkında'], ['nav.contact', 'Menü: İletişim'], ['footer.tagline', 'Footer kısa yazı'], ['footer.copyrightSuffix', 'Telif yazısı']
     ]},
     { title: 'Ana sayfa', fields: [
       ['home.heroEyebrow', 'Hero küçük başlık'], ['home.heroTitle', 'Hero büyük başlık', 'textarea'], ['home.heroLead', 'Hero açıklama', 'textarea'], ['home.heroPrimaryButton', 'Birinci buton'], ['home.heroSecondaryButton', 'İkinci buton'], ['home.heroSlideArtworkIds', 'Slider ürün ID’leri', 'text', 'Virgülle ayır: white-lilies, orman, kirlar'], ['home.approachEyebrow', 'Yaklaşım küçük başlık'], ['home.approachTitle', 'Yaklaşım başlık', 'textarea'], ['home.approachText', 'Yaklaşım metni', 'textarea'], ['home.featuredEyebrow', 'Öne çıkanlar küçük başlık'], ['home.featuredTitle', 'Öne çıkanlar başlık'], ['home.featuredLink', 'Öne çıkanlar link yazısı'], ['home.featuredArtworkIds', 'Öne çıkan ürün ID’leri', 'text', 'Virgülle ayır'], ['home.customPanelEyebrow', 'Özel sipariş panel küçük başlık'], ['home.customPanelTitle', 'Özel sipariş panel başlık', 'textarea'], ['home.customPanelText', 'Özel sipariş panel metni', 'textarea'], ['home.customPanelButton', 'Özel sipariş panel buton'], ['home.linksEyebrow', 'Bağlantılar küçük başlık'], ['home.linksTitle', 'Bağlantılar başlık']
@@ -598,6 +599,9 @@
     ]},
     { title: 'Fuarlar sayfası', fields: [
       ['fairs.eyebrow', 'Fuar küçük başlık'], ['fairs.title', 'Fuar başlık'], ['fairs.intro', 'Fuar açıklama', 'textarea'], ['fairs.emptyDate', 'Fuar yokken rozet'], ['fairs.emptyTitle', 'Fuar yokken başlık'], ['fairs.emptyText', 'Fuar yokken metin', 'textarea'], ['fairs.emptyItems', 'Fuar yokken liste', 'textarea', 'Her satıra bir madde']
+    ]},
+    { title: 'Rotamız sayfası', fields: [
+      ['route.eyebrow', 'Küçük başlık'], ['route.title', 'Büyük başlık'], ['route.intro', 'Kısa açıklama', 'textarea'], ['route.counterLabel', 'Sayaç etiketi'], ['route.mapHint', 'Harita kullanım notu']
     ]},
     { title: 'Özel sipariş', fields: [
       ['custom.eyebrow', 'Özel sipariş küçük başlık'], ['custom.title', 'Özel sipariş başlık', 'textarea'], ['custom.intro', 'Özel sipariş açıklama', 'textarea'], ['custom.examplesEyebrow', 'Örnekler küçük başlık'], ['custom.examplesTitle', 'Örnekler başlık', 'textarea'], ['custom.examplesLink', 'Örnekler link yazısı'], ['custom.customArtworkIds', 'Özel siparişte gösterilecek ürün ID’leri', 'text', 'Virgülle ayır veya boş bırakınca custom ürünler gelir'], ['custom.examplesNote', 'Örnekler notu', 'textarea'], ['custom.orderEyebrow', 'Sipariş notu küçük başlık'], ['custom.orderTitle', 'Sipariş notu başlık', 'textarea'], ['custom.orderText', 'Sipariş notu metni', 'textarea'], ['custom.orderButton', 'Sipariş notu buton']

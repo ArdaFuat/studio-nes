@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Kullanıcı Girişi | Studio Nes</title>
   <meta name="description" content="Studio Nes kullanıcı girişi." />
-  <link rel="stylesheet" href="assets/css/styles.css" />
+  <link rel="stylesheet" href="assets/css/styles.css?v=city-artworks-20260722" />
   <link rel="icon" type="image/png" href="assets/img/favicon.png" />
 </head>
 <body class="admin-page content-pending">
@@ -13,7 +13,7 @@
     <a class="brand" href="index.html" aria-label="Studio Nes ana sayfa"><span class="brand-mark brand-home-mark"><img src="assets/img/home-round-logo.png" alt="Studio Nes logosu"></span><span class="brand-copy"><img class="brand-wordmark" src="assets/img/studio-nes-wordmark.png" alt="Studio Nes"></span></a>
     <button class="nav-toggle" type="button" aria-label="Menüyü aç/kapat" data-nav-toggle><span></span><span></span><span></span></button>
     <nav class="main-nav" data-nav>
-      <a href="index.html" data-content="nav.home">Ana Sayfa</a><a href="galeri.html" data-content="nav.gallery">Galeri</a><a href="fuarlar.html" data-content="nav.fairs">Fuarlar</a><a href="ozel-siparis.html" data-content="nav.custom">Özel Sipariş</a><a href="hakkinda.html" data-content="nav.about">Hakkında</a><a href="iletisim.html" data-content="nav.contact">İletişim</a><a href="admin.html" class="login-nav active" aria-label="Kullanıcı girişi" title="Kullanıcı girişi"><span class="login-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M12 12.25a4.25 4.25 0 1 0 0-8.5 4.25 4.25 0 0 0 0 8.5Zm0 1.8c-4.15 0-7.35 2.14-7.35 4.9 0 .75.6 1.3 1.35 1.3h12c.75 0 1.35-.55 1.35-1.3 0-2.76-3.2-4.9-7.35-4.9Z"></path></svg></span></a>
+      <a href="index.html" data-content="nav.home">Ana Sayfa</a><a href="galeri.html" data-content="nav.gallery">Galeri</a><a href="fuarlar.html" data-content="nav.fairs">Fuarlar</a><a href="yolculuk.html" data-content="nav.route">Rotamız</a><a href="ozel-siparis.html" data-content="nav.custom">Özel Sipariş</a><a href="hakkinda.html" data-content="nav.about">Hakkında</a><a href="iletisim.html" data-content="nav.contact">İletişim</a><a href="admin.html" class="login-nav active" aria-label="Kullanıcı girişi" title="Kullanıcı girişi"><span class="login-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M12 12.25a4.25 4.25 0 1 0 0-8.5 4.25 4.25 0 0 0 0 8.5Zm0 1.8c-4.15 0-7.35 2.14-7.35 4.9 0 .75.6 1.3 1.35 1.3h12c.75 0 1.35-.55 1.35-1.3 0-2.76-3.2-4.9-7.35-4.9Z"></path></svg></span></a>
     </nav>
   </header>
 
@@ -48,6 +48,7 @@
           </div>
           <div class="admin-toolbar-actions">
             <a class="btn ghost" href="galeri.html" target="_blank" rel="noopener">Galeriyi Önizle</a>
+            <a class="btn ghost" href="yolculuk.html" target="_blank" rel="noopener">Rotayı Önizle</a>
             <button class="btn ghost" type="button" data-new-product>Yeni Ürün</button>
             <button class="btn ghost" type="button" data-seed-defaults>İlk Ürünleri Aktar</button>
             <button class="btn ghost" type="button" data-export-json>Yedek İndir</button>
@@ -231,13 +232,34 @@
             </form>
             <div class="product-list fair-list" data-fair-list></div>
           </section>
+
+          <section class="admin-card journey-manager">
+            <div class="admin-section-title row-title">
+              <div>
+                <h2>Rotamız Haritası</h2>
+                <p>Önce ulaşılan şehirleri seç; ardından o şehirdeki tabloları galeriden işaretle veya eser bilgisini gizli tut.</p>
+              </div>
+              <strong data-journey-admin-count>0 / 81</strong>
+            </div>
+            <form class="admin-form" data-journey-form>
+              <label>Şehir ara
+                <input id="journeyCitySearch" type="search" placeholder="Örn: İstanbul, Ankara, İzmir" autocomplete="off">
+              </label>
+              <div class="journey-city-selector" data-journey-city-selector aria-label="Türkiye şehirleri"></div>
+              <div class="journey-city-configs" data-journey-city-configs aria-live="polite"></div>
+              <div class="admin-inline-actions">
+                <button class="btn primary" type="submit" data-journey-submit>Rotayı Kaydet</button>
+                <button class="btn ghost" type="button" data-clear-journeys>Tümünü Temizle</button>
+              </div>
+            </form>
+          </section>
         </div>
       </div>
     </section>
   </main>
 
   <footer class="site-footer"><div class="footer-brand"><img class="footer-wordmark" src="assets/img/studio-nes-wordmark.png" alt="Studio Nes"><p data-content="footer.tagline">El yapımı akrilik tuval çalışmaları.</p></div><p>© <span data-year></span> <span data-content="footer.copyrightSuffix">Studio Nes. Tüm hakları saklıdır.</span></p></footer>
-  <script src="assets/js/data.js?v=catdedupe-20260704"></script>
+  <script src="assets/js/data.js?v=city-artworks-20260722"></script>
   <script src="assets/js/slot-defaults.js?v=catdedupe-20260704"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
@@ -246,5 +268,7 @@
   <script src="assets/js/main.js?v=catdedupe-20260704"></script>
   <script src="assets/js/admin.js?v=catdedupe-20260704"></script>
   <script src="assets/js/admin-slot-manager.js?v=catdedupe-20260704"></script>
+  <script src="assets/js/turkey-map-data.js?v=reached-cities-20260722"></script>
+  <script src="assets/js/admin-journeys.js?v=city-artworks-20260722"></script>
 </body>
 </html>

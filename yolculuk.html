@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rotamız | Studio Nes</title>
+  <meta name="description" content="Studio Nes tablolarının ulaştığı şehirleri gösteren interaktif Türkiye haritası." />
+  <link rel="stylesheet" href="assets/css/styles.css?v=city-artworks-20260722" />
+  <link rel="icon" type="image/png" href="assets/img/favicon.png" />
+</head>
+<body class="journey-page content-pending">
+  <header class="site-header" data-header>
+    <a class="brand" href="index.html" aria-label="Studio Nes ana sayfa"><span class="brand-mark brand-home-mark"><img src="assets/img/home-round-logo.png" alt="Studio Nes logosu"></span><span class="brand-copy"><img class="brand-wordmark" src="assets/img/studio-nes-wordmark.png" alt="Studio Nes"></span></a>
+    <button class="nav-toggle" type="button" aria-label="Menüyü aç/kapat" data-nav-toggle><span></span><span></span><span></span></button>
+    <nav class="main-nav" data-nav>
+      <a href="index.html" data-content="nav.home">Ana Sayfa</a><a href="galeri.html" data-content="nav.gallery">Galeri</a><a href="fuarlar.html" data-content="nav.fairs">Fuarlar</a><a href="yolculuk.html" class="active" data-content="nav.route">Rotamız</a><a href="ozel-siparis.html" data-content="nav.custom">Özel Sipariş</a><a href="hakkinda.html" data-content="nav.about">Hakkında</a><a href="iletisim.html" data-content="nav.contact">İletişim</a><a href="admin.html" class="login-nav" aria-label="Kullanıcı girişi" title="Kullanıcı girişi"><span class="login-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M12 12.25a4.25 4.25 0 1 0 0-8.5 4.25 4.25 0 0 0 0 8.5Zm0 1.8c-4.15 0-7.35 2.14-7.35 4.9 0 .75.6 1.3 1.35 1.3h12c.75 0 1.35-.55 1.35-1.3 0-2.76-3.2-4.9-7.35-4.9Z"></path></svg></span></a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="page-hero journey-hero reached-cities-hero">
+      <p class="eyebrow" data-content="route.eyebrow">Studio Nes Türkiye Haritası</p>
+      <h1 data-content="route.title">Rotamız</h1>
+      <p data-content="route.intro">Tablolarımızın Türkiye'de hayat bulduğu şehirler.</p>
+    </section>
+
+    <section class="section no-pad-top reached-cities-section">
+      <div class="reached-map-card">
+        <div class="reached-map-toolbar">
+          <div class="reached-city-progress" aria-label="Ulaşılan şehir sayısı">
+            <strong data-journey-city-count>0</strong>
+            <span class="reached-city-total">/ 81</span>
+            <span class="reached-city-label" data-content="route.counterLabel">ulaşılan şehir</span>
+          </div>
+          <p data-content="route.mapHint">Renkli bir şehre dokunarak oradaki tabloyu görebilirsin.</p>
+        </div>
+        <div class="journey-map-stage reached-map-stage" data-journey-map>
+          <div class="reached-map-loading" aria-live="polite">Harita hazırlanıyor…</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer"><div class="footer-brand"><img class="footer-wordmark" src="assets/img/studio-nes-wordmark.png" alt="Studio Nes"><p data-content="footer.tagline">El yapımı akrilik tuval çalışmaları.</p></div><p>© <span data-year></span> <span data-content="footer.copyrightSuffix">Studio Nes. Tüm hakları saklıdır.</span></p></footer>
+  <script src="assets/js/data.js?v=city-artworks-20260722"></script>
+  <script src="assets/js/turkey-map-data.js?v=accurate-map-20260722"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+  <script src="assets/js/firebase-config.js?v=reached-cities-20260722"></script>
+  <script src="assets/js/main.js?v=reached-cities-20260722"></script>
+  <script src="assets/js/journey.js?v=city-artworks-20260722"></script>
+</body>
+</html>

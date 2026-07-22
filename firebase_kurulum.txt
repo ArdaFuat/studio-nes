@@ -1,8 +1,8 @@
 FIREBASE KURULUMU - NESS ART CANLI ADMIN (STORAGE YOK)
 =====================================================
 
-Bu sürümde Firebase Storage kullanılmaz. Ürün, site yazıları, bağlantılar ve fuarlar Firestore'a kaydedilir.
-Görseller için admin panelde görsel yolu / URL girilebilir veya bilgisayardan görsel seçilebilir; görsel otomatik küçültülüp Firestore kaydına eklenir.
+Bu sürümde Firebase Storage kullanılmaz. Ürün, site yazıları, bağlantılar, fuarlar ve ulaşılan şehir seçimleri Firestore'a kaydedilir.
+Ürün ve fuar görselleri admin panelinden yönetilir. Rotamız bölümünde şehir seçimi yapılır; her şehir galerideki tablolarla eşleştirilebilir veya eser bilgisi gizli tutulabilir.
 
 1) Firebase projesi
 -------------------
@@ -58,6 +58,11 @@ service cloud.firestore {
       allow read: if true;
       allow create, update, delete: if isAdmin();
     }
+
+    match /journeys/{journeyId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
   }
 }
 
@@ -103,6 +108,7 @@ Bundan sonra ürün, site yazıları, bağlantılar ve fuar ekleme/düzenleme/si
 - Site yazıları: admin panelindeki "Site yazıları" bölümünden tüm sayfa başlıklarını, açıklamaları, notları, SSS ve kategori yazılarını değiştir.
 - Bağlantılar: sosyal medya/satış kartlarını ekle, sil veya düzenle.
 - Fuarlar: fuar adı, tarih, konum, açıklama ve birden fazla fotoğraf ekle. Fuar fotoğrafları canlı sitede büyütülüp ileri/geri kaydırılabilir. Çok fazla fotoğrafta direkt görsel URL kullanmak Firestore sınırı açısından daha sağlıklıdır.
+- Rotamız: Ulaşılan şehirleri seç; şehir kartından galerideki bir veya birden fazla tabloyu işaretle ya da “Belirtmek istemiyoruz” seçeneğini kullan. “Rotayı Kaydet” dediğinde harita canlı güncellenir. Sayaç seçili şehir / 81 şeklinde çalışır.
 - Yeni görsel için iki yol var: bilgisayardan seçmek veya assets/img/dosya-adi.jpg gibi yol yazmak.
 
 

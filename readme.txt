@@ -1,12 +1,13 @@
 NESS ART - CANLI ADMIN PANELLI SURUM
 ====================================
 
-Bu paket Netlify gibi statik hostinglerde çalışır; ürün, site yazıları, bağlantılar ve fuar ekleme/silme/düzenleme işlemleri Firebase üzerinden canlıya yansır.
+Bu paket Netlify gibi statik hostinglerde çalışır; ürün, site yazıları, bağlantılar, fuarlar ve ulaşılan şehir seçimleri Firebase üzerinden canlıya yansır.
 
 Dosyalar
 --------
 - index.html: Ana sayfa
 - galeri.html: Galeri sayfası
+- yolculuk.html: Ulaşılan illeri koyu renkle gösteren 81 illi interaktif Türkiye haritası
 - admin.html: Canlı ürün + site içeriği + bağlantı + fuar yönetim paneli
 - assets/js/firebase-config.js: Firebase proje ayarları ve admin mail listesi
 - assets/js/admin.js: Admin panel mantığı
@@ -19,9 +20,11 @@ Nasıl çalışır?
 2. Galeri ürünleri Firestore'daki "artworks" koleksiyonundan okunur.
 3. Site metinleri ve bağlantılar Firestore'daki "siteContent/main" dokümanından okunur.
 4. Fuarlar Firestore'daki "fairs" koleksiyonundan okunur.
-5. Admin panel ürün/site yazısı/bağlantı/fuar kaydedince Firestore'a yazar.
-6. Görsel için bilgisayardan seçim yapabilir, assets/img/dosya.jpg yazabilir veya direkt https://... görsel linki kullanabilirsin.
-7. Firestore boşsa site geçici olarak dosyadaki varsayılan ürün ve site yazılarını gösterir.
+5. Ulaşılan şehirler Firestore'daki "journeys" koleksiyonundan okunur.
+6. Admin panelinde haritada renklenecek şehirler seçilir; eser, görsel veya açıklama eklenmez.
+7. Admin panel ürün/site yazısı/bağlantı/fuar/şehir seçimi kaydedince Firestore'a yazar.
+8. Görsel için bilgisayardan seçim yapabilir, assets/img/dosya.jpg yazabilir veya direkt https://... görsel linki kullanabilirsin.
+9. Firestore boşsa site geçici olarak dosyadaki varsayılan ürün ve site yazılarını gösterir.
 
 Kurulum için FIREBASE_KURULUM.txt dosyasındaki adımları takip et.
 
@@ -54,3 +57,16 @@ Görsel slotları notu
 - Sayfa açılırken HTML içindeki eski sabit yazı/görsel artık görünmez.
 - Site önce admin/Firebase içeriğini hazırlar, sonra tek seferde görünür hale gelir.
 - Ana sayfa üst slider çerçevesiz görsel slotlarından gelir; “Galeriden seçilen tablolar” ise tekrar galeri ürünlerinden ve satış linklerinden gelir.
+
+
+2026-07-22 Rotamız güncellemesi:
+- Sekme adı “Rotamız” olarak değiştirildi.
+- Harita, gerçek il sınırlarını kullanan doğru Türkiye silüetiyle 81 ili ayrı ayrı gösterir. Seçilen iller koyu renkle görünür.
+- Şehre tıklanınca yalnızca şehir adı açılır.
+- Sayaç seçili şehir / 81 biçimindedir.
+- Eser kartları, hikâye, ilçe, tarih, görsel, son durak ve “Yeni Durak” alanları kaldırıldı.
+- Admin panelinde yalnızca şehir seçimi yapılır.
+
+2026-07-22 Gerçek harita geometrisi düzeltmesi:
+- Kullanıcının gönderdiği MIT lisanslı SVG Türkiye Haritası kullanıldı.
+- Önceki yaklaşık il şekilleri kaldırıldı; gerçek il sınırları ve doğru Türkiye silüeti yerel olarak pakete gömüldü.

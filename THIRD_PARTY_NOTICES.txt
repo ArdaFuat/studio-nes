@@ -1,0 +1,16 @@
+THIRD-PARTY MAP NOTICE
+======================
+
+The accurate province geometry used on the “Rotamız” page comes from the open-source
+“SVG Türkiye Haritası” project distributed by dnomak.
+
+Project page:
+http://dnomak.com.tr/svg-turkiye-haritasi/
+
+Upstream map source:
+https://commons.wikimedia.org/wiki/File:Turkey_provinces_blank_gray.svg
+
+License: MIT
+
+This package stores the SVG geometry locally. The public page does not download the
+map from GeoGuessr, a CDN, or GitHub while it is running.
