@@ -2188,3 +2188,164 @@ summary { cursor: pointer; font-weight: 900; color: var(--forest-900); }
   .journey-city-config-head .small-btn { padding-inline: .65rem; font-size: .68rem; }
   .journey-city-card { width: 230px; }
 }
+
+
+/* Rotamız — tüm ekranlarda tam genişlikte, kaydırmasız harita */
+.journey-page .reached-map-card {
+  min-height: 0;
+}
+.journey-page .reached-map-stage {
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: visible;
+}
+.journey-page .turkey-province-map {
+  display: block;
+  width: 100%;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: auto;
+  max-width: 1080px;
+  max-height: none;
+  aspect-ratio: 1007.478 / 527.323;
+  margin-inline: auto;
+  touch-action: manipulation;
+}
+
+@media (max-width: 900px) {
+  .journey-page .reached-cities-section {
+    padding-left: clamp(.7rem, 3vw, 1.2rem);
+    padding-right: clamp(.7rem, 3vw, 1.2rem);
+  }
+  .journey-page .reached-map-stage {
+    display: block;
+    padding: .55rem .55rem 1rem;
+    overflow-x: visible;
+  }
+  .journey-page .turkey-province-map {
+    width: 100%;
+    min-width: 0 !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .journey-page .reached-cities-hero {
+    padding: 1.35rem 1rem .85rem;
+  }
+  .journey-page .reached-cities-hero h1 {
+    font-size: clamp(2.45rem, 14vw, 4rem);
+  }
+  .journey-page .reached-cities-hero > p:last-child {
+    font-size: .98rem;
+    line-height: 1.55;
+  }
+  .journey-page .reached-map-card {
+    min-height: 0;
+    border-radius: 22px;
+  }
+  .journey-page .reached-map-toolbar {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: .45rem;
+    padding: .9rem .9rem .25rem;
+  }
+  .journey-page .reached-map-toolbar > p {
+    max-width: none;
+    font-size: .77rem;
+    line-height: 1.4;
+    text-align: left;
+  }
+  .journey-page .reached-city-progress {
+    flex-wrap: nowrap;
+  }
+  .journey-page .reached-city-progress strong {
+    font-size: clamp(2.25rem, 12vw, 3.4rem);
+  }
+  .journey-page .reached-city-total {
+    font-size: clamp(1.35rem, 7vw, 2rem);
+  }
+  .journey-page .reached-city-label {
+    width: auto;
+    margin: 0 0 0 .2rem;
+    font-size: .64rem;
+    letter-spacing: .045em;
+  }
+  .journey-page .reached-map-stage {
+    min-height: 0;
+    padding: .35rem .4rem .85rem;
+    justify-content: center;
+  }
+  .journey-page .turkey-province-map {
+    width: 100%;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    height: auto;
+    filter: drop-shadow(0 10px 12px rgba(7, 23, 15, .1));
+  }
+  .journey-page .turkey-province path,
+  .journey-page .turkey-province polygon,
+  .journey-page .turkey-province circle {
+    stroke-width: 1 !important;
+  }
+  .journey-page .journey-city-card {
+    width: min(218px, calc(100% - 12px));
+    border-radius: 14px;
+  }
+  .journey-page .journey-city-card-head {
+    padding: .48rem .62rem .3rem;
+  }
+  .journey-page .journey-city-card-slider {
+    grid-template-columns: 24px minmax(0, 1fr) 24px;
+    padding: .44rem .38rem .52rem;
+  }
+  .journey-page .journey-city-card-artwork {
+    grid-template-columns: 42px minmax(0, 1fr);
+    gap: .45rem;
+  }
+  .journey-page .journey-city-card-artwork img {
+    width: 42px;
+    height: 42px;
+    border-radius: 8px;
+  }
+  .journey-page .journey-city-card-artwork strong {
+    font-size: .72rem;
+  }
+  .journey-page .journey-city-card-arrow {
+    width: 24px;
+    height: 28px;
+  }
+}
+
+@media (max-width: 390px) {
+  .journey-page .reached-cities-section {
+    padding-left: .45rem;
+    padding-right: .45rem;
+  }
+  .journey-page .reached-map-toolbar {
+    padding-inline: .72rem;
+  }
+  .journey-page .reached-map-stage {
+    padding-inline: .22rem;
+  }
+  .journey-page .reached-city-label {
+    font-size: .58rem;
+  }
+  .journey-page .journey-city-card {
+    width: min(204px, calc(100% - 10px));
+  }
+}
+
+@media (orientation: landscape) and (max-height: 600px) {
+  .journey-page .reached-cities-hero {
+    padding-top: .8rem;
+    padding-bottom: .55rem;
+  }
+  .journey-page .reached-cities-hero h1 {
+    margin-block: .2rem .35rem;
+    font-size: clamp(2.2rem, 8vw, 3.8rem);
+  }
+  .journey-page .reached-map-toolbar {
+    padding-top: .65rem;
+  }
+}

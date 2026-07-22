@@ -181,6 +181,10 @@
 
     const svg = document.importNode(source.documentElement, true);
     svg.classList.add('turkey-province-map');
+    svg.removeAttribute('width');
+    svg.removeAttribute('height');
+    svg.setAttribute('width', '100%');
+    svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
     svg.setAttribute('role', 'group');
     svg.setAttribute('aria-label', '81 ili gösteren interaktif Türkiye haritası');
 
