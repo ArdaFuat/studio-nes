@@ -222,6 +222,7 @@ const DEFAULT_SITE_CONTENT = {
     route: "Rotamız",
     custom: "Özel Sipariş",
     about: "Hakkında",
+    reviews: "Değerlendirmeler",
     contact: "İletişim"
   },
   footer: {
@@ -321,6 +322,16 @@ const DEFAULT_SITE_CONTENT = {
       { title: "Doğal tonlar", text: "Orman yeşili, toprak tonları, krem ve yumuşak ışık geçişleri tasarım kimliğinin ana parçalarıdır." },
       { title: "Hediye değeri", text: "Tablolar hem ev dekorasyonu hem de kişisel ve anlamlı hediye seçeneği olarak sunulur." }
     ]
+  },
+  reviews: {
+    eyebrow: "Sizin deneyiminiz",
+    title: "Studio Nes eserleri evinizde nasıl bir yer buldu?",
+    intro: "Satın aldığınız eseri seçerek deneyiminizi paylaşabilir, diğer sanatseverlerin gerçek değerlendirmelerini inceleyebilirsiniz. Gönderilen her yorum, yayımlanmadan önce Studio Nes tarafından kontrol edilir.",
+    formEyebrow: "Değerlendirmenizi paylaşın",
+    formTitle: "Studio Nes’ten bir eser satın aldınız mı?",
+    formIntro: "Satın aldığınız eseri, bulunduğunuz şehri ve deneyiminizi paylaşın. Yorumunuz kontrol edildikten sonra bu sayfada yayımlanacaktır.",
+    feedEyebrow: "Onaylı yorumlar",
+    feedTitle: "Studio Nes evlerinden notlar"
   },
   contact: {
     eyebrow: "İletişim & Satış",

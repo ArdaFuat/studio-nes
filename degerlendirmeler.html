@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Değerlendirmeler | Studio Nes</title>
+  <meta name="description" content="Studio Nes eserlerini satın alanların değerlendirmelerini inceleyin veya satın aldığınız eser için yorumunuzu paylaşın." />
+  <link rel="stylesheet" href="assets/css/styles.css?v=reviews-20260804" />
+  <link rel="icon" type="image/png" href="assets/img/favicon.png" />
+</head>
+<body class="reviews-page content-pending">
+  <header class="site-header" data-header>
+    <a class="brand" href="index.html" aria-label="Studio Nes ana sayfa"><span class="brand-mark brand-home-mark"><img src="assets/img/home-round-logo.png" alt="Studio Nes logosu"></span><span class="brand-copy"><img class="brand-wordmark" src="assets/img/studio-nes-wordmark.png" alt="Studio Nes"></span></a>
+    <button class="nav-toggle" type="button" aria-label="Menüyü aç/kapat" data-nav-toggle><span></span><span></span><span></span></button>
+    <nav class="main-nav" data-nav>
+      <a href="index.html" data-content="nav.home">Ana Sayfa</a><a href="galeri.html" data-content="nav.gallery">Galeri</a><a href="fuarlar.html" data-content="nav.fairs">Fuarlar</a><a href="yolculuk.html" data-content="nav.route">Rotamız</a><a href="ozel-siparis.html" data-content="nav.custom">Özel Sipariş</a><a href="hakkinda.html" data-content="nav.about">Hakkında</a><a href="degerlendirmeler.html" class="active" data-content="nav.reviews">Değerlendirmeler</a><a href="iletisim.html" data-content="nav.contact">İletişim</a><a href="admin.html" class="login-nav" aria-label="Kullanıcı girişi" title="Kullanıcı girişi"><span class="login-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M12 12.25a4.25 4.25 0 1 0 0-8.5 4.25 4.25 0 0 0 0 8.5Zm0 1.8c-4.15 0-7.35 2.14-7.35 4.9 0 .75.6 1.3 1.35 1.3h12c.75 0 1.35-.55 1.35-1.3 0-2.76-3.2-4.9-7.35-4.9Z"></path></svg></span></a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="reviews-hero section">
+      <div class="reviews-hero-copy reveal">
+        <p class="eyebrow dark" data-content="reviews.eyebrow">Sizin deneyiminiz</p>
+        <h1 data-content="reviews.title">Studio Nes eserleri evinizde nasıl bir yer buldu?</h1>
+        <p data-content="reviews.intro">Satın aldığınız eseri seçerek deneyiminizi paylaşabilir, diğer sanatseverlerin gerçek değerlendirmelerini inceleyebilirsiniz. Gönderilen her yorum, yayımlanmadan önce Studio Nes tarafından kontrol edilir.</p>
+        <a class="btn primary" href="#yorum-ekle">Değerlendirme Yaz</a>
+      </div>
+      <aside class="review-summary-card reveal delay-1" aria-live="polite">
+        <span class="review-summary-label">Müşteri değerlendirmeleri</span>
+        <strong data-review-average>—</strong>
+        <div class="review-summary-stars" data-review-summary-stars aria-label="Ortalama puan">☆☆☆☆☆</div>
+        <p><b data-review-count>0</b> onaylı değerlendirme</p>
+      </aside>
+    </section>
+
+    <section class="section reviews-layout">
+      <aside class="review-form-card reveal" id="yorum-ekle">
+        <div class="review-form-intro">
+          <p class="eyebrow dark" data-content="reviews.formEyebrow">Değerlendirmenizi paylaşın</p>
+          <h2 data-content="reviews.formTitle">Studio Nes’ten bir eser satın aldınız mı?</h2>
+          <p data-content="reviews.formIntro">Satın aldığınız eseri, bulunduğunuz şehri ve deneyiminizi paylaşın. Yorumunuz kontrol edildikten sonra bu sayfada yayımlanacaktır.</p>
+        </div>
+
+        <form class="review-form" data-review-form>
+          <div class="two-col">
+            <label>Adınız
+              <input id="reviewFirstName" name="firstName" type="text" maxlength="40" autocomplete="given-name" required placeholder="Adınız">
+            </label>
+            <label>Soyadınız
+              <input id="reviewLastName" name="lastName" type="text" maxlength="50" autocomplete="family-name" required placeholder="Soyadınız">
+            </label>
+          </div>
+
+          <label class="review-privacy-row">
+            <input id="reviewHideName" name="hideName" type="checkbox">
+            <span><strong>Adımı ve soyadımı gizle</strong><small>Yayımlandığında yalnızca baş harfleriniz görünür: A*** G****</small></span>
+          </label>
+
+          <label>Şehriniz
+            <select id="reviewCity" name="city" required>
+              <option value="">Şehir seçin</option>
+            </select>
+          </label>
+
+          <label>Satın aldığınız eser
+            <select id="reviewArtwork" name="artworkId" required>
+              <option value="">Galeriden eser seçin</option>
+            </select>
+          </label>
+
+          <div class="review-product-preview" data-review-product-preview hidden></div>
+
+          <fieldset class="review-rating-fieldset">
+            <legend>Puanınız</legend>
+            <div class="star-rating" data-star-rating aria-label="Beş üzerinden puan seçin">
+              <input type="radio" id="rating5" name="rating" value="5" required><label for="rating5" title="5 yıldız">★</label>
+              <input type="radio" id="rating4" name="rating" value="4"><label for="rating4" title="4 yıldız">★</label>
+              <input type="radio" id="rating3" name="rating" value="3"><label for="rating3" title="3 yıldız">★</label>
+              <input type="radio" id="rating2" name="rating" value="2"><label for="rating2" title="2 yıldız">★</label>
+              <input type="radio" id="rating1" name="rating" value="1"><label for="rating1" title="1 yıldız">★</label>
+            </div>
+            <small data-rating-label>Henüz puan seçilmedi</small>
+          </fieldset>
+
+          <label>Yorumunuz
+            <textarea id="reviewComment" name="comment" rows="6" minlength="10" maxlength="1000" required placeholder="Eser, paketleme ve deneyiminiz hakkında düşüncelerinizi yazın..."></textarea>
+            <small class="review-character-count"><span data-comment-count>0</span>/1000</small>
+          </label>
+
+          <label class="review-honeypot" aria-hidden="true">Web sitesi<input id="reviewWebsite" name="website" type="text" tabindex="-1" autocomplete="off"></label>
+
+          <button class="btn primary review-submit" type="submit" data-review-submit>Değerlendirmeyi Gönder</button>
+          <p class="review-form-status" data-review-form-status hidden></p>
+        </form>
+      </aside>
+
+      <div class="reviews-feed reveal delay-1">
+        <div class="reviews-feed-head">
+          <div>
+            <p class="eyebrow dark" data-content="reviews.feedEyebrow">Onaylı yorumlar</p>
+            <h2 data-content="reviews.feedTitle">Studio Nes evlerinden notlar</h2>
+          </div>
+          <label class="review-sort">Sırala
+            <select data-review-sort>
+              <option value="featured">Önerilen sıra</option>
+              <option value="newest">En yeni</option>
+              <option value="highest">En yüksek puan</option>
+            </select>
+          </label>
+        </div>
+        <div class="public-review-list" data-public-review-list>
+          <div class="review-loading">Değerlendirmeler hazırlanıyor…</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer"><div class="footer-brand"><img class="footer-wordmark" src="assets/img/studio-nes-wordmark.png" alt="Studio Nes"><p data-content="footer.tagline">El yapımı akrilik tuval çalışmaları.</p></div><p>© <span data-year></span> <span data-content="footer.copyrightSuffix">Studio Nes. Tüm hakları saklıdır.</span></p></footer>
+
+  <script src="assets/js/data.js?v=reviews-20260804"></script>
+  <script src="assets/js/slot-defaults.js?v=reviews-20260804"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+  <script src="assets/js/firebase-config.js?v=reviews-20260804"></script>
+  <script src="assets/js/main.js?v=reviews-20260804"></script>
+  <script src="assets/js/reviews.js?v=reviews-20260804"></script>
+</body>
+</html>

@@ -266,6 +266,8 @@
     injectStyles();
     const section = document.createElement('section');
     section.className = 'admin-card slot-manager-card';
+    section.dataset.adminSection = 'visuals';
+    if (document.querySelector('[data-admin-tab="visuals"].active')) section.classList.add('is-active');
     section.innerHTML = `
       <div class="admin-section-title row-title">
         <div>

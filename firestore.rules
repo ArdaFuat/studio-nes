@@ -1,0 +1,70 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAdmin() {
+      return request.auth != null && request.auth.token.email in [
+        "ardamevk12@gmail.com",
+        "ardabesiktasarda@gmail.com",
+        "nesibeyakann@gmail.com"
+      ];
+    }
+
+    match /artworks/{artworkId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /siteContent/{docId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /fairs/{fairId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Ziyaretçinin gönderdiği ham yorum. Tam ad yalnızca admin tarafından okunabilir.
+    match /reviewSubmissions/{reviewId} {
+      allow read, update, delete: if isAdmin();
+      allow create: if (request.auth == null || isAdmin())
+        && request.resource.data.keys().hasOnly([
+          'firstName', 'lastName', 'hideName', 'city', 'artworkId',
+          'artworkTitle', 'rating', 'comment',
+          'approved', 'order', 'submittedAt', 'createdAt'
+        ])
+        && request.resource.data.firstName is string
+        && request.resource.data.firstName.size() >= 1
+        && request.resource.data.firstName.size() <= 40
+        && request.resource.data.lastName is string
+        && request.resource.data.lastName.size() >= 1
+        && request.resource.data.lastName.size() <= 50
+        && request.resource.data.hideName is bool
+        && request.resource.data.city is string
+        && request.resource.data.city.size() >= 3
+        && request.resource.data.city.size() <= 20
+        && request.resource.data.artworkId is string
+        && request.resource.data.artworkId.size() >= 1
+        && request.resource.data.artworkId.size() <= 120
+        && request.resource.data.artworkTitle is string
+        && request.resource.data.artworkTitle.size() >= 1
+        && request.resource.data.artworkTitle.size() <= 160
+        && request.resource.data.rating is int
+        && request.resource.data.rating >= 1
+        && request.resource.data.rating <= 5
+        && request.resource.data.comment is string
+        && request.resource.data.comment.size() >= 10
+        && request.resource.data.comment.size() <= 1000
+        && request.resource.data.approved == false
+        && request.resource.data.order == 999999
+        && request.resource.data.submittedAt is string
+        && request.resource.data.createdAt == request.time;
+    }
+
+    // Adminin onaylayıp kişisel bilgileri ayıklayarak yayımladığı yorumlar.
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+  }
+}

@@ -1,16 +1,21 @@
 NESS ART - CANLI ADMIN PANELLI SURUM
 ====================================
 
-Bu paket Netlify gibi statik hostinglerde çalışır; ürün, site yazıları, bağlantılar, fuarlar ve ulaşılan şehir seçimleri Firebase üzerinden canlıya yansır.
+Bu paket Netlify gibi statik hostinglerde çalışır; ürün, site yazıları, bağlantılar, fuarlar, ulaşılan şehir seçimleri ve müşteri değerlendirmeleri Firebase üzerinden canlıya yansır.
 
 Dosyalar
 --------
 - index.html: Ana sayfa
 - galeri.html: Galeri sayfası
 - yolculuk.html: Ulaşılan illeri koyu renkle gösteren 81 illi interaktif Türkiye haritası
-- admin.html: Canlı ürün + site içeriği + bağlantı + fuar yönetim paneli
+- degerlendirmeler.html: Müşteri değerlendirme formu ve onaylı yorumlar
+- admin.html: Sekmeli ürün + yorum + site içeriği + bağlantı + fuar yönetim paneli
+- firestore.rules: Değerlendirme sistemi dahil güncel Firestore güvenlik kuralları
 - assets/js/firebase-config.js: Firebase proje ayarları ve admin mail listesi
-- assets/js/admin.js: Admin panel mantığı
+- assets/js/admin.js: Admin panel ürün/içerik mantığı
+- assets/js/reviews.js: Ziyaretçi yorum formu ve yayımlanan yorumlar
+- assets/js/admin-reviews.js: Yorum onayı, gizlilik ve sıralama yönetimi
+- assets/js/admin-tabs.js: Admin panel bölüm sekmeleri
 - assets/js/main.js: Site ön yüzü, Firebase/JSON ürün + site içeriği + fuar okuma sistemi
 - assets/data/artworks.json: Firebase boşken kullanılan yedek ilk ürün verisi
 
@@ -20,11 +25,12 @@ Nasıl çalışır?
 2. Galeri ürünleri Firestore'daki "artworks" koleksiyonundan okunur.
 3. Site metinleri ve bağlantılar Firestore'daki "siteContent/main" dokümanından okunur.
 4. Fuarlar Firestore'daki "fairs" koleksiyonundan okunur.
-5. Ulaşılan şehirler Firestore'daki "journeys" koleksiyonundan okunur.
-6. Admin panelinde haritada renklenecek şehirler seçilir; eser, görsel veya açıklama eklenmez.
-7. Admin panel ürün/site yazısı/bağlantı/fuar/şehir seçimi kaydedince Firestore'a yazar.
-8. Görsel için bilgisayardan seçim yapabilir, assets/img/dosya.jpg yazabilir veya direkt https://... görsel linki kullanabilirsin.
-9. Firestore boşsa site geçici olarak dosyadaki varsayılan ürün ve site yazılarını gösterir.
+5. Rotamız verileri Firestore'daki "siteContent/journeys" belgesinden okunur.
+6. Ziyaretçi değerlendirmeleri önce adminin okuyabildiği "reviewSubmissions" koleksiyonuna düşer.
+7. Admin onayladığında gizlilik seçimine göre sansürlenen yorum "reviews" koleksiyonunda yayımlanır.
+8. Admin panel ürün/site yazısı/bağlantı/fuar/şehir ve yorum işlemlerini Firestore'a yazar.
+9. Görsel için bilgisayardan seçim yapabilir, assets/img/dosya.jpg yazabilir veya direkt https://... görsel linki kullanabilirsin.
+10. Firestore boşsa site geçici olarak dosyadaki varsayılan ürün ve site yazılarını gösterir.
 
 Kurulum için FIREBASE_KURULUM.txt dosyasındaki adımları takip et.
 
@@ -75,3 +81,11 @@ Görsel slotları notu
 ROTAMIZ FIRESTORE NOTU
 ----------------------
 Rota ve şehir-tablo eşleştirmeleri siteContent/journeys belgesinde tutulur. Mevcut siteContent Firestore izni yeterlidir; journeys adında ayrı koleksiyon kuralı gerekmez.
+
+
+2026-08-04 Değerlendirmeler güncellemesi:
+- Üst menüye Değerlendirmeler sekmesi eklendi.
+- Formda ad, soyad, isim gizleme, 81 il, galeriden eser seçimi, 1-5 yıldız ve yorum alanı bulunur.
+- Gizli isimler yalnızca baş harfleri kalacak biçimde sansürlenir. Ham ad-soyad public koleksiyona yazılmaz.
+- Admin panel sekmeli hale getirildi; Yorumlar sekmesinde onay, yayından kaldırma, silme ve sıralama yapılır.
+- Canlıya almadan önce firebase_kurulum.txt içindeki yeni Firestore kurallarını yayımlamak zorunludur.

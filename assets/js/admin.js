@@ -589,7 +589,7 @@
 
   const CONTENT_FIELDS = [
     { title: 'Menü & alt bilgi', fields: [
-      ['nav.home', 'Menü: Ana sayfa'], ['nav.gallery', 'Menü: Galeri'], ['nav.fairs', 'Menü: Fuarlar'], ['nav.route', 'Menü: Rotamız'], ['nav.custom', 'Menü: Özel Sipariş'], ['nav.about', 'Menü: Hakkında'], ['nav.contact', 'Menü: İletişim'], ['footer.tagline', 'Footer kısa yazı'], ['footer.copyrightSuffix', 'Telif yazısı']
+      ['nav.home', 'Menü: Ana sayfa'], ['nav.gallery', 'Menü: Galeri'], ['nav.fairs', 'Menü: Fuarlar'], ['nav.route', 'Menü: Rotamız'], ['nav.custom', 'Menü: Özel Sipariş'], ['nav.about', 'Menü: Hakkında'], ['nav.reviews', 'Menü: Değerlendirmeler'], ['nav.contact', 'Menü: İletişim'], ['footer.tagline', 'Footer kısa yazı'], ['footer.copyrightSuffix', 'Telif yazısı']
     ]},
     { title: 'Ana sayfa', fields: [
       ['home.heroEyebrow', 'Hero küçük başlık'], ['home.heroTitle', 'Hero büyük başlık', 'textarea'], ['home.heroLead', 'Hero açıklama', 'textarea'], ['home.heroPrimaryButton', 'Birinci buton'], ['home.heroSecondaryButton', 'İkinci buton'], ['home.heroSlideArtworkIds', 'Slider ürün ID’leri', 'text', 'Virgülle ayır: white-lilies, orman, kirlar'], ['home.approachEyebrow', 'Yaklaşım küçük başlık'], ['home.approachTitle', 'Yaklaşım başlık', 'textarea'], ['home.approachText', 'Yaklaşım metni', 'textarea'], ['home.featuredEyebrow', 'Öne çıkanlar küçük başlık'], ['home.featuredTitle', 'Öne çıkanlar başlık'], ['home.featuredLink', 'Öne çıkanlar link yazısı'], ['home.featuredArtworkIds', 'Öne çıkan ürün ID’leri', 'text', 'Virgülle ayır'], ['home.customPanelEyebrow', 'Özel sipariş panel küçük başlık'], ['home.customPanelTitle', 'Özel sipariş panel başlık', 'textarea'], ['home.customPanelText', 'Özel sipariş panel metni', 'textarea'], ['home.customPanelButton', 'Özel sipariş panel buton'], ['home.linksEyebrow', 'Bağlantılar küçük başlık'], ['home.linksTitle', 'Bağlantılar başlık']
@@ -609,6 +609,9 @@
     { title: 'Hakkında', fields: [
       ['about.eyebrow', 'Hakkında küçük başlık'], ['about.title', 'Hakkında başlık', 'textarea'], ['about.image', 'Hakkında görsel URL / yol'], ['about.imageAlt', 'Hakkında görsel alt yazı'], ['about.paragraph1', 'Hakkında paragraf 1', 'textarea'], ['about.paragraph2', 'Hakkında paragraf 2', 'textarea']
     ]},
+    { title: 'Değerlendirmeler', fields: [
+      ['reviews.eyebrow', 'Değerlendirme küçük başlık'], ['reviews.title', 'Değerlendirme ana başlık', 'textarea'], ['reviews.intro', 'Değerlendirme giriş metni', 'textarea'], ['reviews.formEyebrow', 'Form küçük başlık'], ['reviews.formTitle', 'Form başlık', 'textarea'], ['reviews.formIntro', 'Form açıklama', 'textarea'], ['reviews.feedEyebrow', 'Yorum listesi küçük başlık'], ['reviews.feedTitle', 'Yorum listesi başlık', 'textarea']
+    ]},
     { title: 'İletişim', fields: [
       ['contact.eyebrow', 'İletişim küçük başlık'], ['contact.title', 'İletişim başlık', 'textarea'], ['contact.intro', 'İletişim açıklama', 'textarea'], ['contact.faqEyebrow', 'SSS küçük başlık'], ['contact.faqTitle', 'SSS başlık']
     ]}
@@ -617,8 +620,8 @@
   const renderPrimitiveContentFields = () => {
     const box = $('[data-content-fields]');
     if (!box) return;
-    const primitiveHtml = CONTENT_FIELDS.map((section) => `
-      <details class="content-fieldset" open>
+    const primitiveHtml = CONTENT_FIELDS.map((section, sectionIndex) => `
+      <details class="content-fieldset" ${sectionIndex === 0 ? 'open' : ''}>
         <summary>${escapeHtml(section.title)}</summary>
         <div class="content-field-grid">
           ${section.fields.map(([path, label, type = 'text', hint = '']) => `
