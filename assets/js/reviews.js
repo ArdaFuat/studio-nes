@@ -277,6 +277,49 @@
     }
   };
 
+  const reviewMobileQuery = window.matchMedia('(max-width: 760px)');
+
+  const setReviewFormOpen = (open, options = {}) => {
+    const disclosure = $('[data-review-disclosure]');
+    const toggle = $('[data-review-toggle]');
+    const panel = $('[data-review-panel]');
+    const state = $('[data-review-toggle-state]');
+    if (!disclosure || !toggle || !panel) return;
+
+    const shouldOpen = reviewMobileQuery.matches ? Boolean(open) : true;
+    disclosure.classList.toggle('is-open', shouldOpen);
+    toggle.setAttribute('aria-expanded', String(shouldOpen));
+    panel.setAttribute('aria-hidden', String(!shouldOpen));
+    if (shouldOpen) panel.removeAttribute('inert');
+    else panel.setAttribute('inert', '');
+    if (state) state.textContent = shouldOpen ? 'Yorum formunu kapatın' : 'Yorum formunu açın';
+
+    if (options.scroll) {
+      window.setTimeout(() => disclosure.scrollIntoView({ behavior: 'smooth', block: 'start' }), 40);
+    }
+  };
+
+  const setupReviewDisclosure = () => {
+    const toggle = $('[data-review-toggle]');
+    if (!toggle) return;
+
+    setReviewFormOpen(!reviewMobileQuery.matches || window.location.hash === '#yorum-ekle');
+    toggle.addEventListener('click', () => {
+      setReviewFormOpen(toggle.getAttribute('aria-expanded') !== 'true');
+    });
+
+    document.addEventListener('click', (event) => {
+      const trigger = event.target.closest('[data-review-open], a[href="#yorum-ekle"]');
+      if (!trigger || !reviewMobileQuery.matches) return;
+      event.preventDefault();
+      setReviewFormOpen(true, { scroll: true });
+    });
+
+    const syncDisclosure = () => setReviewFormOpen(!reviewMobileQuery.matches);
+    if (typeof reviewMobileQuery.addEventListener === 'function') reviewMobileQuery.addEventListener('change', syncDisclosure);
+    else if (typeof reviewMobileQuery.addListener === 'function') reviewMobileQuery.addListener(syncDisclosure);
+  };
+
   const bindEvents = () => {
     $('#reviewArtwork')?.addEventListener('change', renderArtworkPreview);
     $('[data-review-sort]')?.addEventListener('change', renderReviews);
@@ -293,6 +336,7 @@
   };
 
   const init = async () => {
+    setupReviewDisclosure();
     fillCities();
     bindEvents();
     await loadArtworks();
