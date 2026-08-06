@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Değerlendirmeler | Studio Nes</title>
   <meta name="description" content="Studio Nes eserlerini satın alanların değerlendirmelerini inceleyin veya satın aldığınız eser için yorumunuzu paylaşın." />
-  <link rel="stylesheet" href="assets/css/styles.css?v=reviews-20260806-featured" />
+  <link rel="stylesheet" href="assets/css/styles.css?v=reviews-20260806-gallerymodal" />
   <link rel="icon" type="image/png" href="assets/img/favicon.png" />
 </head>
 <body class="reviews-page content-pending">
@@ -137,14 +137,52 @@
     </section>
   </main>
 
+
+  <div class="review-detail-modal" data-review-modal hidden aria-hidden="true">
+    <button class="review-detail-backdrop" type="button" data-review-modal-close aria-label="Yorum penceresini kapat"></button>
+    <section class="review-detail-dialog" role="dialog" aria-modal="true" aria-labelledby="reviewDetailTitle" aria-describedby="reviewDetailComment">
+      <button class="review-detail-close" type="button" data-review-modal-close aria-label="Kapat">
+        <span aria-hidden="true"></span>
+      </button>
+
+      <div class="review-detail-artwork">
+        <img data-review-modal-image src="assets/img/ness-logo.png" alt="Satın alınan eser">
+      </div>
+
+      <div class="review-detail-content">
+        <div class="review-detail-work-head">
+          <p class="review-detail-kicker">Satın alınan eser</p>
+          <h2 id="reviewDetailTitle" data-review-modal-title>Studio Nes eseri</h2>
+          <p class="review-detail-work-meta" data-review-modal-artwork-meta hidden></p>
+        </div>
+
+        <dl class="review-detail-facts" data-review-modal-facts hidden>
+          <div data-review-modal-price-row hidden><dt>Fiyat</dt><dd data-review-modal-price></dd></div>
+          <div data-review-modal-status-row hidden><dt>Durum</dt><dd data-review-modal-status></dd></div>
+          <div data-review-modal-category-row hidden><dt>Kategori</dt><dd data-review-modal-category></dd></div>
+        </dl>
+        <a class="btn primary review-detail-link" data-review-modal-link href="#" target="_blank" rel="noopener" hidden>Satış sayfasında gör</a>
+
+        <div class="review-detail-separator" aria-hidden="true"></div>
+        <p class="review-detail-kicker">Müşteri yorumu</p>
+        <div class="review-detail-stars" data-review-modal-stars aria-label="Değerlendirme puanı"></div>
+        <p class="review-detail-comment" id="reviewDetailComment" data-review-modal-comment></p>
+        <div class="review-detail-author">
+          <span class="review-detail-initial" data-review-modal-initial aria-hidden="true">S</span>
+          <span><strong data-review-modal-author>Studio Nes müşterisi</strong><small data-review-modal-meta></small></span>
+        </div>
+      </div>
+    </section>
+  </div>
+
   <footer class="site-footer"><div class="footer-brand"><img class="footer-wordmark" src="assets/img/studio-nes-wordmark.png" alt="Studio Nes"><p data-content="footer.tagline">El yapımı akrilik tuval çalışmaları.</p></div><p>© <span data-year></span> <span data-content="footer.copyrightSuffix">Studio Nes. Tüm hakları saklıdır.</span></p></footer>
 
-  <script src="assets/js/data.js?v=reviews-20260806-featured"></script>
-  <script src="assets/js/slot-defaults.js?v=reviews-20260806-featured"></script>
+  <script src="assets/js/data.js?v=reviews-20260806-popup"></script>
+  <script src="assets/js/slot-defaults.js?v=reviews-20260806-popup"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
-  <script src="assets/js/firebase-config.js?v=reviews-20260806-featured"></script>
-  <script src="assets/js/main.js?v=reviews-20260806-featured"></script>
-  <script src="assets/js/reviews.js?v=reviews-20260806-featured"></script>
+  <script src="assets/js/firebase-config.js?v=reviews-20260806-popup"></script>
+  <script src="assets/js/main.js?v=reviews-20260806-popup"></script>
+  <script src="assets/js/reviews.js?v=reviews-20260806-gallerymodal"></script>
 </body>
 </html>
