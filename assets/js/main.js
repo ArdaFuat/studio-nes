@@ -15,6 +15,8 @@
   const PUBLIC_CACHE_KEY = 'studio-nes-public-cache-v6-cat-dedupe';
   let hasPaintedOnce = false;
   let lastRenderSignature = '';
+  let realtimeStarted = false;
+  const mobileFastQuery = window.matchMedia('(max-width: 760px)');
 
 
   const readPublicCache = () => {
@@ -672,8 +674,10 @@
   };
 
   const setupRealtime = () => {
+    if (realtimeStarted) return true;
     const app = getFirebaseApp();
-    if (!app || !firebase.firestore) return;
+    if (!app || !firebase.firestore) return false;
+    realtimeStarted = true;
     try {
       firebase.firestore().collection(FIREBASE_ARTWORKS_COLLECTION).orderBy('order', 'asc')
         .onSnapshot((snapshot) => {
@@ -696,8 +700,11 @@
           if (renderAllContent()) writePublicCache();
         }, (error) => console.warn('Firebase fuar canlı takip kapandı:', error));
     } catch (error) {
+      realtimeStarted = false;
       console.warn('Firebase canlı takip başlatılamadı:', error);
+      return false;
     }
+    return true;
   };
 
   const updateFairLightbox = () => {
@@ -845,6 +852,23 @@
       paintedFromCache = true;
     }
 
+    // Mobilde sayfayı üç ayrı Firebase isteğinin en yavaşını bekletmiyoruz.
+    // Önce cache veya dosyadaki mevcut içerik anında çizilir; içerik, eserler
+    // ve fuarlar daha sonra kendi canlı dinleyicilerinden bağımsız gelir.
+    if (mobileFastQuery.matches) {
+      if (!paintedFromCache) {
+        siteContent = deepMerge(defaults, {});
+        if (siteContent.gallery) siteContent.gallery.filters = normalizeGalleryFilters(siteContent.gallery.filters || []);
+        currentFairs = normalizeFairs(typeof DEFAULT_FAIRS !== 'undefined' ? DEFAULT_FAIRS : []);
+        currentArtworks = normalizeArtworks(typeof ARTWORKS !== 'undefined' ? ARTWORKS : []);
+        renderAllContent({ force: true });
+        setupDialogsAndClicks();
+        markSiteReady();
+      }
+      setupRealtime();
+      return;
+    }
+
     try {
       const { loadedContent, loadedFairs, loadedArtworks } = await loadLiveState();
       applyLoadedState(loadedContent, loadedFairs, loadedArtworks, { force: !paintedFromCache });
@@ -867,5 +891,6 @@
     }
   };
 
+  window.addEventListener('ness:firebase-ready', () => setupRealtime());
   init();
 })();

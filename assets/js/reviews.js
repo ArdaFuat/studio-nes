@@ -2,6 +2,8 @@
   const SUBMISSIONS_COLLECTION = 'reviewSubmissions';
   const PUBLIC_REVIEWS_COLLECTION = 'reviews';
   const ARTWORKS_COLLECTION = 'artworks';
+  const REVIEWS_CACHE_KEY = 'studio-nes-reviews-cache-v1';
+  const PUBLIC_CACHE_KEY = 'studio-nes-public-cache-v6-cat-dedupe';
 
   const CITIES = [
     'İstanbul', 'Ankara',
@@ -22,6 +24,7 @@
   let featuredTimer = null;
   let reviewModalReturnFocus = null;
   let featuredClickSuppressedUntil = 0;
+  let reviewsUnsubscribe = null;
   const featuredMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
 
   const $ = (selector) => document.querySelector(selector);
@@ -51,6 +54,41 @@
       console.warn('Değerlendirme sistemi başlatılamadı:', error);
       return null;
     }
+  };
+
+
+  const readJsonCache = (key) => {
+    try {
+      const raw = window.localStorage?.getItem(key);
+      return raw ? JSON.parse(raw) : null;
+    } catch (_) {
+      return null;
+    }
+  };
+
+  const readReviewsCache = () => {
+    const cached = readJsonCache(REVIEWS_CACHE_KEY);
+    return Array.isArray(cached?.reviews) ? cached.reviews.map((item) => normalizeReview(item, item.id)) : [];
+  };
+
+  const writeReviewsCache = () => {
+    try {
+      const payload = {
+        cachedAt: new Date().toISOString(),
+        reviews: reviews.map((review) => ({
+          ...review,
+          publishedAt: toDate(review.publishedAt)?.toISOString() || review.publishedAt || ''
+        }))
+      };
+      window.localStorage?.setItem(REVIEWS_CACHE_KEY, JSON.stringify(payload));
+    } catch (_) {
+      // Cache doluysa canlı Firebase akışı normal şekilde devam eder.
+    }
+  };
+
+  const readCachedArtworks = () => {
+    const cached = readJsonCache(PUBLIC_CACHE_KEY);
+    return Array.isArray(cached?.artworks) ? cached.artworks.map((art) => normalizeArtwork(art, art.id)) : [];
   };
 
   const toDate = (value) => {
@@ -103,25 +141,40 @@
     select.insertAdjacentHTML('beforeend', CITIES.map((city) => `<option value="${escapeHtml(city)}">${escapeHtml(city)}</option>`).join(''));
   };
 
-  const loadArtworks = async () => {
-    const app = getFirebaseApp();
-    let items = [];
-    if (app && firebase.firestore) {
-      try {
-        const snapshot = await firebase.firestore().collection(ARTWORKS_COLLECTION).orderBy('order', 'asc').get();
-        items = snapshot.docs.map((doc) => normalizeArtwork(doc.data(), doc.id));
-      } catch (error) {
-        console.warn('Galerideki eserler okunamadı:', error);
-      }
-    }
-    if (!items.length && typeof ARTWORKS !== 'undefined' && Array.isArray(ARTWORKS)) items = ARTWORKS.map((art) => normalizeArtwork(art, art.id));
-    artworks = items.filter((art) => !art.hidden).sort((a, b) => a.order - b.order);
-
+  const renderArtworkOptions = () => {
     const select = $('#reviewArtwork');
     if (!select) return;
+    const currentValue = select.value;
     select.innerHTML = '<option value="">Galeriden eser seçin</option>' + artworks
       .map((art) => `<option value="${escapeHtml(art.id)}">${escapeHtml(art.title)}${art.size ? ` · ${escapeHtml(art.size)}` : ''}</option>`)
       .join('');
+    if (artworks.some((art) => art.id === currentValue)) select.value = currentValue;
+  };
+
+  const setArtworks = (items) => {
+    artworks = (Array.isArray(items) ? items : [])
+      .map((art) => normalizeArtwork(art, art.id))
+      .filter((art) => !art.hidden)
+      .sort((a, b) => a.order - b.order);
+    renderArtworkOptions();
+  };
+
+  const loadArtworks = async () => {
+    const cachedItems = readCachedArtworks();
+    const fallbackItems = typeof ARTWORKS !== 'undefined' && Array.isArray(ARTWORKS) ? ARTWORKS : [];
+    if (!artworks.length) setArtworks(cachedItems.length ? cachedItems : fallbackItems);
+
+    const app = getFirebaseApp();
+    if (!app || !firebase.firestore) return false;
+    try {
+      const snapshot = await firebase.firestore().collection(ARTWORKS_COLLECTION).orderBy('order', 'asc').get();
+      const items = snapshot.docs.map((doc) => normalizeArtwork(doc.data(), doc.id));
+      if (items.length) setArtworks(items);
+      return true;
+    } catch (error) {
+      console.warn('Galerideki eserler okunamadı:', error);
+      return false;
+    }
   };
 
   const renderArtworkPreview = () => {
@@ -299,21 +352,23 @@
   };
 
   const watchReviews = () => {
+    if (reviewsUnsubscribe) return true;
     const app = getFirebaseApp();
-    if (!app || !firebase.firestore) {
-      reviews = [];
-      renderReviews();
-      return;
-    }
-    firebase.firestore().collection(PUBLIC_REVIEWS_COLLECTION)
+    if (!app || !firebase.firestore) return false;
+
+    reviewsUnsubscribe = firebase.firestore().collection(PUBLIC_REVIEWS_COLLECTION)
       .onSnapshot((snapshot) => {
         reviews = snapshot.docs.map((doc) => normalizeReview(doc.data(), doc.id));
         renderReviews();
+        writeReviewsCache();
       }, (error) => {
+        reviewsUnsubscribe = null;
         console.warn('Değerlendirmeler okunamadı:', error);
+        if (reviews.length) return;
         const list = $('[data-public-review-list]');
         if (list) list.innerHTML = '<div class="review-empty-state"><h3>Değerlendirmeler şu anda yüklenemiyor.</h3><p>Lütfen sayfayı daha sonra yeniden açın.</p></div>';
       });
+    return true;
   };
 
   const setFormStatus = (message, type = 'info') => {
@@ -637,15 +692,29 @@
     }));
   };
 
-  const init = async () => {
+  const init = () => {
     setupReviewDisclosure();
     setupFeaturedCarousel();
     setupReviewModal();
     fillCities();
     bindEvents();
-    await loadArtworks();
+
+    const cachedReviews = readReviewsCache();
+    if (cachedReviews.length) {
+      reviews = cachedReviews;
+      renderReviews();
+    }
+
+    // Yorumları eser listesinden bağımsız başlatıyoruz. Önceden yorumlar,
+    // galeri sorgusu bitene kadar gereksiz yere bekliyordu.
+    loadArtworks();
     watchReviews();
   };
+
+  window.addEventListener('ness:firebase-ready', () => {
+    loadArtworks();
+    watchReviews();
+  });
 
   init();
 })();

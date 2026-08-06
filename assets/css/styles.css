@@ -3536,10 +3536,4 @@ body.review-modal-open { overflow: hidden; }
     display: none;
   }
 
-  body:not(.admin-page) .reveal,
-  body:not(.admin-page) .reveal.visible {
-    opacity: 1;
-    transform: none;
-    transition: none;
-  }
 }

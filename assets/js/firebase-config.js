@@ -30,3 +30,10 @@ window.NESS_FIREBASE_IS_CONFIGURED = function () {
     !String(cfg.appId).includes("BURAYA")
   );
 };
+
+
+// Firebase SDK bu dosyadan önce yüklendiği için bekleyen hızlı başlangıç
+// kodlarına canlı bağlantının artık hazır olduğunu bildirir.
+window.setTimeout(function () {
+  window.dispatchEvent(new Event('ness:firebase-ready'));
+}, 0);
