@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Kullanıcı Girişi | Studio Nes</title>
   <meta name="description" content="Studio Nes kullanıcı girişi." />
-  <link rel="stylesheet" href="assets/css/styles.css?v=reviews-20260804" />
+  <link rel="stylesheet" href="assets/css/styles.css?v=reviews-20260806-featured" />
   <link rel="icon" type="image/png" href="assets/img/favicon.png" />
 </head>
 <body class="admin-page content-pending">
@@ -192,19 +192,21 @@
             <div class="admin-section-title row-title">
               <div>
                 <h2>Değerlendirmeler</h2>
-                <p>Gönderilen yorumları kontrol et, onayla ve sitedeki gösterim sırasını düzenle.</p>
+                <p>Gönderilen yorumları kontrol et, onayla; başlığın altındaki yorum vitrini ile genel yorum sırasını ayrı ayrı düzenle.</p>
               </div>
               <strong data-review-admin-count>0 yorum</strong>
             </div>
             <div class="review-admin-summary">
               <div><span>Onay bekleyen</span><strong data-review-pending-count>0</strong></div>
               <div><span>Yayımlanan</span><strong data-review-approved-count>0</strong></div>
+              <div><span>Vitrinde</span><strong data-review-featured-count>0 / 4</strong></div>
               <div><span>Ortalama puan</span><strong data-review-admin-average>—</strong></div>
             </div>
             <div class="review-admin-filters" role="group" aria-label="Yorum filtresi">
               <button class="active" type="button" data-review-filter="all">Tümü</button>
               <button type="button" data-review-filter="pending">Onay Bekleyenler</button>
               <button type="button" data-review-filter="approved">Yayımlananlar</button>
+              <button type="button" data-review-filter="featured">Vitrindekiler</button>
             </div>
             <div class="review-admin-list" data-review-admin-list>
               <p class="muted-box">Yorumlar hazırlanıyor…</p>
@@ -298,11 +300,11 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
-  <script src="assets/js/firebase-config.js?v=reviews-20260804"></script>
-  <script src="assets/js/main.js?v=reviews-20260804"></script>
-  <script src="assets/js/admin.js?v=reviews-20260804"></script>
-  <script src="assets/js/admin-reviews.js?v=reviews-20260804"></script>
-  <script src="assets/js/admin-tabs.js?v=reviews-20260804"></script>
+  <script src="assets/js/firebase-config.js?v=reviews-20260806-featured"></script>
+  <script src="assets/js/main.js?v=reviews-20260806-featured"></script>
+  <script src="assets/js/admin.js?v=reviews-20260806-featured"></script>
+  <script src="assets/js/admin-reviews.js?v=reviews-20260806-featured"></script>
+  <script src="assets/js/admin-tabs.js?v=reviews-20260806-featured"></script>
   <script src="assets/js/admin-slot-manager.js?v=catdedupe-20260704"></script>
   <script src="assets/js/turkey-map-data.js?v=reached-cities-20260722"></script>
   <script src="assets/js/admin-journeys.js?v=route-permission-fix-20260722"></script>

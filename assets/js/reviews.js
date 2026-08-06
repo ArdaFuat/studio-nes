@@ -18,6 +18,9 @@
   let artworks = [];
   let reviews = [];
   let selectedArtwork = null;
+  let featuredIndex = 0;
+  let featuredTimer = null;
+  const featuredMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
 
   const $ = (selector) => document.querySelector(selector);
   const escapeHtml = (value = '') => String(value)
@@ -81,6 +84,8 @@
     rating: Math.max(1, Math.min(5, Number(review.rating) || 5)),
     comment: String(review.comment || ''),
     order: Number.isFinite(Number(review.order)) ? Number(review.order) : 999999,
+    featured: Boolean(review.featured),
+    featuredOrder: Number.isFinite(Number(review.featuredOrder)) ? Number(review.featuredOrder) : 999999,
     publishedAt: review.publishedAt || review.createdAt || ''
   });
 
@@ -129,6 +134,85 @@
 
   const renderStars = (rating) => `<span class="review-card-stars" aria-label="5 üzerinden ${rating} yıldız">${'★'.repeat(rating)}${'☆'.repeat(5 - rating)}</span>`;
 
+  const getFeaturedReviews = () => reviews
+    .filter((review) => review.featured)
+    .sort((a, b) => a.featuredOrder - b.featuredOrder || a.order - b.order)
+    .slice(0, 4);
+
+  const stopFeaturedAutoplay = () => {
+    if (featuredTimer) window.clearInterval(featuredTimer);
+    featuredTimer = null;
+  };
+
+  const showFeaturedReview = (nextIndex, options = {}) => {
+    const items = getFeaturedReviews();
+    const track = $('[data-featured-track]');
+    if (!track || !items.length) return;
+    featuredIndex = (nextIndex + items.length) % items.length;
+    track.style.transform = `translate3d(-${featuredIndex * 100}%, 0, 0)`;
+    track.querySelectorAll('.featured-review-slide').forEach((slide, index) => {
+      slide.setAttribute('aria-hidden', String(index !== featuredIndex));
+    });
+    document.querySelectorAll('[data-featured-dot]').forEach((dot, index) => {
+      const active = index === featuredIndex;
+      dot.classList.toggle('active', active);
+      dot.setAttribute('aria-current', active ? 'true' : 'false');
+    });
+    if (options.restart) startFeaturedAutoplay();
+  };
+
+  const startFeaturedAutoplay = () => {
+    stopFeaturedAutoplay();
+    const items = getFeaturedReviews();
+    if (items.length < 2 || featuredMotionQuery.matches || document.hidden) return;
+    featuredTimer = window.setInterval(() => showFeaturedReview(featuredIndex + 1), 7800);
+  };
+
+  const renderFeaturedReviews = () => {
+    const showcase = $('[data-featured-showcase]');
+    const track = $('[data-featured-track]');
+    const nav = $('[data-featured-nav]');
+    const dots = $('[data-featured-dots]');
+    if (!showcase || !track || !nav || !dots) return;
+
+    const items = getFeaturedReviews();
+    stopFeaturedAutoplay();
+    if (!items.length) {
+      showcase.setAttribute('hidden', '');
+      track.innerHTML = '';
+      dots.innerHTML = '';
+      return;
+    }
+
+    showcase.removeAttribute('hidden');
+    track.innerHTML = items.map((review, index) => `
+      <article class="featured-review-slide" aria-hidden="${index === 0 ? 'false' : 'true'}">
+        <div class="featured-review-topline">
+          ${renderStars(review.rating).replace('review-card-stars', 'review-card-stars featured-review-stars')}
+          <span class="featured-review-quote-mark" aria-hidden="true">“</span>
+        </div>
+        <p class="featured-review-comment">“${escapeHtml(review.comment)}”</p>
+        <div class="featured-review-footer">
+          <div class="featured-review-author">
+            <span class="featured-review-initial" aria-hidden="true">${escapeHtml(review.publicName.charAt(0).toLocaleUpperCase('tr-TR') || 'S')}</span>
+            <span><strong>${escapeHtml(review.publicName)}</strong><small>${escapeHtml(review.city)}</small></span>
+          </div>
+          <div class="featured-review-artwork">
+            <img src="${escapeHtml(review.artworkImage)}" alt="${escapeHtml(review.artworkTitle)}">
+            <span><small>Satın alınan eser</small><strong>${escapeHtml(review.artworkTitle)}</strong></span>
+          </div>
+        </div>
+      </article>`).join('');
+
+    dots.innerHTML = items.map((_, index) => `
+      <button type="button" data-featured-dot="${index}" aria-label="${index + 1}. yorumu göster" aria-current="${index === 0 ? 'true' : 'false'}"></button>`).join('');
+    if (items.length > 1) nav.removeAttribute('hidden');
+    else nav.setAttribute('hidden', '');
+    featuredIndex = Math.min(featuredIndex, items.length - 1);
+    showFeaturedReview(featuredIndex);
+    startFeaturedAutoplay();
+  };
+
   const getSortedReviews = () => {
     const mode = $('[data-review-sort]')?.value || 'featured';
     const items = [...reviews];
@@ -157,6 +241,7 @@
     if (!list) return;
     const items = getSortedReviews();
     updateSummary();
+    renderFeaturedReviews();
     if (!items.length) {
       list.innerHTML = `
         <div class="review-empty-state">
@@ -320,6 +405,47 @@
     else if (typeof reviewMobileQuery.addListener === 'function') reviewMobileQuery.addListener(syncDisclosure);
   };
 
+  const setupFeaturedCarousel = () => {
+    const showcase = $('[data-featured-showcase]');
+    if (!showcase) return;
+
+    showcase.addEventListener('click', (event) => {
+      const previous = event.target.closest('[data-featured-prev]');
+      const next = event.target.closest('[data-featured-next]');
+      const dot = event.target.closest('[data-featured-dot]');
+      if (previous) showFeaturedReview(featuredIndex - 1, { restart: true });
+      if (next) showFeaturedReview(featuredIndex + 1, { restart: true });
+      if (dot) showFeaturedReview(Number(dot.dataset.featuredDot) || 0, { restart: true });
+    });
+
+    showcase.addEventListener('mouseenter', stopFeaturedAutoplay);
+    showcase.addEventListener('mouseleave', startFeaturedAutoplay);
+    showcase.addEventListener('focusin', stopFeaturedAutoplay);
+    showcase.addEventListener('focusout', (event) => {
+      if (!showcase.contains(event.relatedTarget)) startFeaturedAutoplay();
+    });
+
+    let touchStartX = 0;
+    showcase.addEventListener('touchstart', (event) => {
+      touchStartX = event.changedTouches[0]?.clientX || 0;
+      stopFeaturedAutoplay();
+    }, { passive: true });
+    showcase.addEventListener('touchend', (event) => {
+      const touchEndX = event.changedTouches[0]?.clientX || 0;
+      const distance = touchEndX - touchStartX;
+      if (Math.abs(distance) > 45) showFeaturedReview(featuredIndex + (distance < 0 ? 1 : -1));
+      startFeaturedAutoplay();
+    }, { passive: true });
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) stopFeaturedAutoplay();
+      else startFeaturedAutoplay();
+    });
+    const syncMotion = () => startFeaturedAutoplay();
+    if (typeof featuredMotionQuery.addEventListener === 'function') featuredMotionQuery.addEventListener('change', syncMotion);
+    else if (typeof featuredMotionQuery.addListener === 'function') featuredMotionQuery.addListener(syncMotion);
+  };
+
   const bindEvents = () => {
     $('#reviewArtwork')?.addEventListener('change', renderArtworkPreview);
     $('[data-review-sort]')?.addEventListener('change', renderReviews);
@@ -337,6 +463,7 @@
 
   const init = async () => {
     setupReviewDisclosure();
+    setupFeaturedCarousel();
     fillCities();
     bindEvents();
     await loadArtworks();

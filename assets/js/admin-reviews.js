@@ -62,6 +62,8 @@
     comment: String(data.comment || ''),
     approved: Boolean(data.approved),
     order: Number.isFinite(Number(data.order)) ? Number(data.order) : 999999,
+    featured: Boolean(data.featured),
+    featuredOrder: Number.isFinite(Number(data.featuredOrder)) ? Number(data.featuredOrder) : 999999,
     createdAt: data.createdAt || '',
     submittedAt: data.submittedAt || '',
     approvedAt: data.approvedAt || ''
@@ -87,6 +89,7 @@
   };
 
   const approvedItems = () => submissions.filter((item) => item.approved).sort((a, b) => a.order - b.order || timestamp(b) - timestamp(a));
+  const featuredItems = () => approvedItems().filter((item) => item.featured).sort((a, b) => a.featuredOrder - b.featuredOrder || a.order - b.order);
 
   const artworkFor = (item) => artworkRecords.get(item.artworkId) || { title: item.artworkTitle, image: item.artworkImage || 'assets/img/ness-logo.png' };
   const artworkImageFor = (item) => artworkFor(item).image;
@@ -104,11 +107,13 @@
   const updateStats = () => {
     const pending = submissions.filter((item) => !item.approved).length;
     const approved = submissions.filter((item) => item.approved);
+    const featured = approved.filter((item) => item.featured);
     const average = approved.length ? approved.reduce((sum, item) => sum + item.rating, 0) / approved.length : 0;
 
     if ($('[data-review-admin-count]')) $('[data-review-admin-count]').textContent = `${submissions.length} yorum`;
     if ($('[data-review-pending-count]')) $('[data-review-pending-count]').textContent = String(pending);
     if ($('[data-review-approved-count]')) $('[data-review-approved-count]').textContent = String(approved.length);
+    if ($('[data-review-featured-count]')) $('[data-review-featured-count]').textContent = `${featured.length} / 4`;
     if ($('[data-review-admin-average]')) $('[data-review-admin-average]').textContent = approved.length ? average.toFixed(1).replace('.', ',') : '—';
 
     const badge = $('[data-review-pending-badge]');
@@ -124,6 +129,7 @@
     const approved = approvedItems();
     if (activeFilter === 'pending') return pending;
     if (activeFilter === 'approved') return approved;
+    if (activeFilter === 'featured') return featuredItems();
     return [...pending, ...approved];
   };
 
@@ -133,6 +139,7 @@
     updateStats();
     const items = sortedForAdmin();
     const approved = approvedItems();
+    const featured = featuredItems();
 
     if (!items.length) {
       list.innerHTML = '<p class="muted-box">Bu filtrede gösterilecek değerlendirme yok.</p>';
@@ -141,8 +148,9 @@
 
     list.innerHTML = items.map((item) => {
       const approvedIndex = approved.findIndex((approvedItem) => approvedItem.id === item.id);
+      const featuredIndex = featured.findIndex((featuredItem) => featuredItem.id === item.id);
       return `
-        <article class="admin-review-card ${item.approved ? 'is-approved' : 'is-pending'}">
+        <article class="admin-review-card ${item.approved ? 'is-approved' : 'is-pending'} ${item.featured ? 'is-featured' : ''}">
           <img class="admin-review-art" src="${escapeHtml(artworkImageFor(item))}" alt="${escapeHtml(artworkTitleFor(item))}">
           <div class="admin-review-body">
             <div class="admin-review-head">
@@ -150,7 +158,10 @@
                 <strong>${escapeHtml(fullName(item))}</strong>
                 <span>${escapeHtml(item.city)} · ${escapeHtml(formatDate(item.createdAt || item.submittedAt))}</span>
               </div>
-              <span class="admin-review-status">${item.approved ? 'Yayında' : 'Onay bekliyor'}</span>
+              <div class="admin-review-statuses">
+                ${item.featured ? `<span class="admin-review-featured-status">Vitrin ${featuredIndex + 1}/4</span>` : ''}
+                <span class="admin-review-status">${item.approved ? 'Yayında' : 'Onay bekliyor'}</span>
+              </div>
             </div>
             <div class="admin-review-rating" aria-label="${item.rating} yıldız">${'★'.repeat(item.rating)}${'☆'.repeat(5 - item.rating)}</div>
             <p class="admin-review-comment">${escapeHtml(item.comment)}</p>
@@ -160,13 +171,28 @@
               ${item.hideName ? '<span class="privacy-chip">İsim gizli</span>' : ''}
             </div>
             <div class="admin-review-actions">
-              <label class="review-approval-toggle">
-                <input type="checkbox" data-review-approval="${escapeHtml(item.id)}" ${item.approved ? 'checked' : ''}>
-                <span>Doğrulandı ve yayımlansın</span>
-              </label>
-              <div>
-                <button type="button" data-review-action="up" data-id="${escapeHtml(item.id)}" ${!item.approved || approvedIndex <= 0 ? 'disabled' : ''}>Yukarı</button>
-                <button type="button" data-review-action="down" data-id="${escapeHtml(item.id)}" ${!item.approved || approvedIndex < 0 || approvedIndex >= approved.length - 1 ? 'disabled' : ''}>Aşağı</button>
+              <div class="admin-review-toggles">
+                <label class="review-approval-toggle">
+                  <input type="checkbox" data-review-approval="${escapeHtml(item.id)}" ${item.approved ? 'checked' : ''}>
+                  <span>Doğrulandı ve yayımlansın</span>
+                </label>
+                <label class="review-feature-toggle ${item.approved ? '' : 'is-disabled'}">
+                  <input type="checkbox" data-review-featured="${escapeHtml(item.id)}" ${item.featured ? 'checked' : ''} ${item.approved ? '' : 'disabled'}>
+                  <span><strong>Başlığın altındaki yorum vitrininde göster</strong><small>En fazla dört yorum seçilebilir.</small></span>
+                </label>
+              </div>
+              <div class="admin-review-order-groups">
+                ${item.featured ? `
+                  <div class="admin-review-order-group is-featured-order">
+                    <span>Vitrin sırası</span>
+                    <button type="button" data-review-action="featured-up" data-id="${escapeHtml(item.id)}" ${featuredIndex <= 0 ? 'disabled' : ''}>Önceki</button>
+                    <button type="button" data-review-action="featured-down" data-id="${escapeHtml(item.id)}" ${featuredIndex < 0 || featuredIndex >= featured.length - 1 ? 'disabled' : ''}>Sonraki</button>
+                  </div>` : ''}
+                <div class="admin-review-order-group">
+                  <span>Yorumlar sırası</span>
+                  <button type="button" data-review-action="up" data-id="${escapeHtml(item.id)}" ${!item.approved || approvedIndex <= 0 ? 'disabled' : ''}>Yukarı</button>
+                  <button type="button" data-review-action="down" data-id="${escapeHtml(item.id)}" ${!item.approved || approvedIndex < 0 || approvedIndex >= approved.length - 1 ? 'disabled' : ''}>Aşağı</button>
+                </div>
                 <button class="danger" type="button" data-review-action="delete" data-id="${escapeHtml(item.id)}">Sil</button>
               </div>
             </div>
@@ -175,17 +201,33 @@
     }).join('');
   };
 
-  const publicPayload = (item, order) => ({
-    publicName: publicName(item),
-    city: item.city,
-    artworkId: item.artworkId,
-    artworkTitle: artworkTitleFor(item),
-    artworkImage: artworkImageFor(item),
-    rating: item.rating,
-    comment: item.comment,
-    order,
-    publishedAt: firebase.firestore.FieldValue.serverTimestamp()
-  });
+  const publicPayload = (item, order, options = {}) => {
+    const featured = options.featured !== undefined ? Boolean(options.featured) : Boolean(item.featured);
+    const featuredOrder = featured
+      ? (Number.isFinite(Number(options.featuredOrder)) ? Number(options.featuredOrder) : Number(item.featuredOrder) || 0)
+      : 999999;
+    return {
+      publicName: publicName(item),
+      city: item.city,
+      artworkId: item.artworkId,
+      artworkTitle: artworkTitleFor(item),
+      artworkImage: artworkImageFor(item),
+      rating: item.rating,
+      comment: item.comment,
+      order,
+      featured,
+      featuredOrder,
+      publishedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+  };
+
+  const writeFeaturedOrder = (batch, orderedItems) => {
+    const firestore = firebase.firestore();
+    orderedItems.forEach((entry, order) => {
+      batch.update(firestore.collection(SUBMISSIONS_COLLECTION).doc(entry.id), { featured: true, featuredOrder: order });
+      batch.update(firestore.collection(PUBLIC_REVIEWS_COLLECTION).doc(entry.id), { featured: true, featuredOrder: order });
+    });
+  };
 
   const setApproval = async (id, approved) => {
     const item = submissions.find((entry) => entry.id === id);
@@ -201,17 +243,69 @@
       batch.update(submissionRef, {
         approved: true,
         order: existingOrder,
+        featured: false,
+        featuredOrder: 999999,
         approvedAt: firebase.firestore.FieldValue.serverTimestamp(),
         approvedBy: firebase.auth().currentUser?.email || ''
       });
-      batch.set(publicRef, publicPayload(item, existingOrder), { merge: false });
+      batch.set(publicRef, publicPayload(item, existingOrder, { featured: false }), { merge: false });
     } else {
-      batch.update(submissionRef, { approved: false, approvedAt: null, approvedBy: '' });
+      const remainingFeatured = featuredItems().filter((entry) => entry.id !== id);
+      batch.update(submissionRef, {
+        approved: false,
+        featured: false,
+        featuredOrder: 999999,
+        approvedAt: null,
+        approvedBy: ''
+      });
       batch.delete(publicRef);
+      writeFeaturedOrder(batch, remainingFeatured);
     }
 
     await batch.commit();
     setNotice(approved ? 'Yorum doğrulandı ve değerlendirmeler sayfasında yayımlandı.' : 'Yorum yayından kaldırıldı.', 'success');
+  };
+
+  const setFeatured = async (id, shouldFeature) => {
+    const item = submissions.find((entry) => entry.id === id);
+    if (!item || !item.approved) throw new Error('Önce yorumu doğrulayıp yayımlamalısınız.');
+    if (Boolean(item.featured) === Boolean(shouldFeature)) return;
+
+    const ordered = featuredItems().filter((entry) => entry.id !== id);
+    if (shouldFeature && ordered.length >= 4) {
+      throw new Error('Yorum vitrininde en fazla dört değerlendirme gösterilebilir. Önce seçili yorumlardan birini kaldırın.');
+    }
+
+    const firestore = firebase.firestore();
+    const batch = firestore.batch();
+    const submissionRef = firestore.collection(SUBMISSIONS_COLLECTION).doc(id);
+    const publicRef = firestore.collection(PUBLIC_REVIEWS_COLLECTION).doc(id);
+
+    if (shouldFeature) {
+      const nextOrder = ordered.length;
+      batch.update(submissionRef, { featured: true, featuredOrder: nextOrder });
+      batch.update(publicRef, { featured: true, featuredOrder: nextOrder });
+    } else {
+      batch.update(submissionRef, { featured: false, featuredOrder: 999999 });
+      batch.update(publicRef, { featured: false, featuredOrder: 999999 });
+      writeFeaturedOrder(batch, ordered);
+    }
+
+    await batch.commit();
+    setNotice(shouldFeature ? 'Yorum başlığın altındaki vitrine eklendi.' : 'Yorum vitrinden kaldırıldı.', 'success');
+  };
+
+  const moveFeatured = async (id, direction) => {
+    const ordered = featuredItems();
+    const index = ordered.findIndex((item) => item.id === id);
+    const target = index + direction;
+    if (index < 0 || target < 0 || target >= ordered.length) return;
+    [ordered[index], ordered[target]] = [ordered[target], ordered[index]];
+
+    const batch = firebase.firestore().batch();
+    writeFeaturedOrder(batch, ordered);
+    await batch.commit();
+    setNotice('Başlığın altındaki yorum vitrini sırası güncellendi.', 'success');
   };
 
   const move = async (id, direction) => {
@@ -238,6 +332,7 @@
     const batch = firestore.batch();
     batch.delete(firestore.collection(SUBMISSIONS_COLLECTION).doc(id));
     batch.delete(firestore.collection(PUBLIC_REVIEWS_COLLECTION).doc(id));
+    writeFeaturedOrder(batch, featuredItems().filter((entry) => entry.id !== id));
     await batch.commit();
     setNotice('Yorum silindi.', 'success');
   };
@@ -270,6 +365,8 @@
     try {
       if (action.dataset.reviewAction === 'up') await move(action.dataset.id, -1);
       if (action.dataset.reviewAction === 'down') await move(action.dataset.id, 1);
+      if (action.dataset.reviewAction === 'featured-up') await moveFeatured(action.dataset.id, -1);
+      if (action.dataset.reviewAction === 'featured-down') await moveFeatured(action.dataset.id, 1);
       if (action.dataset.reviewAction === 'delete') await remove(action.dataset.id);
     } catch (error) {
       console.error(error);
@@ -280,17 +377,32 @@
   });
 
   document.addEventListener('change', async (event) => {
-    const toggle = event.target.closest('[data-review-approval]');
-    if (!toggle) return;
-    toggle.disabled = true;
+    const approvalToggle = event.target.closest('[data-review-approval]');
+    if (approvalToggle) {
+      approvalToggle.disabled = true;
+      try {
+        await setApproval(approvalToggle.dataset.reviewApproval, approvalToggle.checked);
+      } catch (error) {
+        console.error(error);
+        approvalToggle.checked = !approvalToggle.checked;
+        setNotice(`Yorum güncellenemedi: ${error.message}`, 'error');
+      } finally {
+        approvalToggle.disabled = false;
+      }
+      return;
+    }
+
+    const featuredToggle = event.target.closest('[data-review-featured]');
+    if (!featuredToggle) return;
+    featuredToggle.disabled = true;
     try {
-      await setApproval(toggle.dataset.reviewApproval, toggle.checked);
+      await setFeatured(featuredToggle.dataset.reviewFeatured, featuredToggle.checked);
     } catch (error) {
       console.error(error);
-      toggle.checked = !toggle.checked;
-      setNotice(`Yorum güncellenemedi: ${error.message}`, 'error');
+      featuredToggle.checked = !featuredToggle.checked;
+      setNotice(error.message || 'Yorum vitrini güncellenemedi.', 'error');
     } finally {
-      toggle.disabled = false;
+      featuredToggle.disabled = false;
     }
   });
 
