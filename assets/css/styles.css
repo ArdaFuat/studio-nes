@@ -3386,7 +3386,7 @@ body.review-modal-open { overflow: hidden; }
 }
 
 .review-detail-dialog {
-  width: min(820px, 100%);
+  width: min(900px, 100%);
   max-height: calc(100dvh - clamp(1.5rem, 6vw, 4rem));
   display: flex;
   flex-direction: column;
@@ -3394,15 +3394,22 @@ body.review-modal-open { overflow: hidden; }
 }
 .review-detail-artwork {
   flex: 0 0 auto;
-  min-height: 300px;
-  height: min(43dvh, 440px);
-  padding: clamp(1rem, 3vw, 2rem);
+  width: 100%;
+  min-height: 0;
+  height: clamp(340px, 50dvh, 560px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(.85rem, 2.4vw, 1.65rem);
 }
 .review-detail-artwork img {
-  width: 100%;
-  height: 100%;
-  max-height: none;
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
   object-fit: contain;
+  object-position: center;
 }
 .review-detail-content {
   flex: 1 1 auto;
@@ -3456,19 +3463,29 @@ body.review-modal-open { overflow: hidden; }
   .review-card-openable:hover { transform: none; }
   .review-detail-dialog {
     max-height: 96dvh;
-    display: flex;
+    display: block;
     grid-template-columns: none;
     grid-template-rows: none;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
   }
   .review-detail-artwork {
-    flex: 0 0 auto;
+    width: 100%;
     min-height: 0;
-    height: clamp(190px, 31dvh, 290px);
-    padding: .8rem 1rem;
+    height: auto;
+    padding: .72rem .78rem;
   }
-  .review-detail-artwork img { max-height: none; }
+  .review-detail-artwork img {
+    width: 100%;
+    height: auto;
+    max-width: 100%;
+    max-height: none;
+    object-fit: contain;
+  }
   .review-detail-content {
-    flex: 1 1 auto;
+    flex: none;
+    overflow: visible;
     padding: 1.2rem 1rem calc(1.45rem + env(safe-area-inset-bottom));
   }
   .review-detail-facts div { align-items: flex-start; }
@@ -3478,7 +3495,7 @@ body.review-modal-open { overflow: hidden; }
 }
 
 @media (max-width: 390px) {
-  .review-detail-artwork { height: clamp(165px, 27dvh, 235px); }
+  .review-detail-artwork { height: auto; padding: .62rem .66rem; }
   .review-detail-content { padding-left: .85rem; padding-right: .85rem; }
   .review-detail-facts div { gap: .7rem; }
 }
@@ -3490,5 +3507,11 @@ body.review-modal-open { overflow: hidden; }
     grid-template-columns: minmax(230px, .82fr) minmax(0, 1.18fr);
     grid-template-rows: 1fr;
   }
-  .review-detail-artwork { height: auto; min-height: 0; }
+  .review-detail-artwork { height: auto; min-height: 0; padding: .75rem; }
+  .review-detail-artwork img {
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: calc(100dvh - 2.6rem);
+  }
 }
