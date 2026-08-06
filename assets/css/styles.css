@@ -3515,3 +3515,31 @@ body.review-modal-open { overflow: hidden; }
     max-height: calc(100dvh - 2.6rem);
   }
 }
+
+/* Mobilde ilk içerik gösterimini Firebase beklemeden yap.
+   Yalnızca görünme gecikmesini kaldırır; yerleşim ve tasarım değişmez. */
+@media (max-width: 760px) {
+  body:not(.admin-page).content-pending {
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  body:not(.admin-page).content-pending .site-header,
+  body:not(.admin-page).content-pending main,
+  body:not(.admin-page).content-pending .site-footer,
+  body:not(.admin-page).content-pending dialog {
+    visibility: visible;
+    opacity: 1;
+  }
+
+  body:not(.admin-page).content-pending::before {
+    display: none;
+  }
+
+  body:not(.admin-page) .reveal,
+  body:not(.admin-page) .reveal.visible {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
