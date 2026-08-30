@@ -2,7 +2,8 @@
   const SUBMISSIONS_COLLECTION = 'reviewSubmissions';
   const PUBLIC_REVIEWS_COLLECTION = 'reviews';
   const ARTWORKS_COLLECTION = 'artworks';
-  const REVIEWS_CACHE_KEY = 'studio-nes-reviews-cache-v1';
+  const REVIEWS_CACHE_KEY = 'studio-nes-reviews-cache-v3-mobile-stable';
+  const LEGACY_REVIEWS_CACHE_KEYS = ['studio-nes-reviews-cache-v2-server-complete', 'studio-nes-reviews-cache-v1'];
   const PUBLIC_CACHE_KEY = 'studio-nes-public-cache-v6-cat-dedupe';
 
   const CITIES = [
@@ -54,10 +55,21 @@
   const getFirebaseApp = () => {
     try {
       if (typeof firebase === 'undefined' || typeof window.NESS_FIREBASE_IS_CONFIGURED !== 'function' || !window.NESS_FIREBASE_IS_CONFIGURED()) return null;
-      if (!firebase.apps.length) firebase.initializeApp(window.NESS_FIREBASE_CONFIG);
+      if (typeof window.NESS_GET_FIRESTORE === 'function') window.NESS_GET_FIRESTORE();
+      else if (!firebase.apps.length) firebase.initializeApp(window.NESS_FIREBASE_CONFIG);
       return firebase.app();
     } catch (error) {
       console.warn('Değerlendirme sistemi başlatılamadı:', error);
+      return null;
+    }
+  };
+
+  const getFirestore = () => {
+    const app = getFirebaseApp();
+    if (!app || typeof firebase === 'undefined' || !firebase.firestore) return null;
+    try {
+      return typeof window.NESS_GET_FIRESTORE === 'function' ? window.NESS_GET_FIRESTORE() : firebase.firestore();
+    } catch (_) {
       return null;
     }
   };
@@ -73,8 +85,18 @@
   };
 
   const readReviewsCache = () => {
-    const cached = readJsonCache(REVIEWS_CACHE_KEY);
-    return Array.isArray(cached?.reviews) ? cached.reviews.map((item) => normalizeReview(item, item.id)) : [];
+    const keys = [REVIEWS_CACHE_KEY, ...LEGACY_REVIEWS_CACHE_KEYS];
+    let best = [];
+    keys.forEach((key) => {
+      const cached = readJsonCache(key);
+      const items = Array.isArray(cached?.reviews)
+        ? cached.reviews.map((item) => normalizeReview(item, item.id))
+        : [];
+      // Eski surumlerden biri tam listeyi daha once aldiysa ilk acilista onu koru.
+      // Canli sunucu snapshot'i geldiginde guncel koleksiyon bunun yerini alir.
+      if (items.length > best.length) best = items;
+    });
+    return best;
   };
 
   const writeReviewsCache = () => {
@@ -219,20 +241,76 @@
     renderArtworkPickerGrid($('[data-artwork-picker-search]')?.value || '');
   };
 
+  let artworksRemoteConfirmed = false;
+  let artworksRetryTimer = null;
+  let artworksFetchPromise = null;
+  let artworksRetryAttempt = 0;
+  const ARTWORK_PROBE_DELAYS = [1600, 4000, 9000, 18000, 30000];
+
+  const applyArtworkSnapshot = (snapshot) => {
+    const items = snapshot.docs.map((doc) => normalizeArtwork(doc.data(), doc.id));
+    const visibleCount = items.filter((art) => !art.hidden).length;
+    const remote = !(snapshot && snapshot.metadata && snapshot.metadata.fromCache);
+
+    if (remote || !artworks.length || visibleCount >= artworks.length) setArtworks(items);
+    artworksFirebaseLoaded = true;
+    if (remote) {
+      artworksRemoteConfirmed = true;
+      artworksRetryAttempt = 0;
+      if (artworksRetryTimer) {
+        window.clearTimeout(artworksRetryTimer);
+        artworksRetryTimer = null;
+      }
+    }
+    return remote;
+  };
+
+  const fetchArtworksOnce = () => {
+    if (artworksRemoteConfirmed) return Promise.resolve(true);
+    if (artworksFetchPromise) return artworksFetchPromise;
+    const db = getFirestore();
+    if (!db) return Promise.resolve(false);
+    artworksFetchPromise = db.collection(ARTWORKS_COLLECTION).get({ source: 'server' })
+      .then((snapshot) => {
+        return applyArtworkSnapshot(snapshot);
+      })
+      .catch((error) => {
+        console.warn('Galeri tek seferlik okunamadı:', error);
+        return false;
+      })
+      .finally(() => { artworksFetchPromise = null; });
+    return artworksFetchPromise;
+  };
+
+  const scheduleArtworkRetry = (delay = null) => {
+    if (artworksRemoteConfirmed || artworksRetryTimer) return;
+    if ('onLine' in navigator && !navigator.onLine) return;
+    const index = Math.min(artworksRetryAttempt, ARTWORK_PROBE_DELAYS.length - 1);
+    const wait = delay === null ? ARTWORK_PROBE_DELAYS[index] : Math.max(0, delay);
+    artworksRetryTimer = window.setTimeout(() => {
+      artworksRetryTimer = null;
+      artworksRetryAttempt += 1;
+      fetchArtworksOnce().then((remote) => {
+        if (!remote && !artworksRemoteConfirmed) scheduleArtworkRetry();
+      });
+    }, wait);
+  };
+
   const loadArtworks = async () => {
     const cachedItems = readCachedArtworks();
     const fallbackItems = typeof ARTWORKS !== 'undefined' && Array.isArray(ARTWORKS) ? ARTWORKS : [];
     if (!artworks.length) setArtworks(cachedItems.length ? cachedItems : fallbackItems);
-    if (artworksFirebaseLoaded && artworksUnsubscribe) return true;
+    if (artworksFirebaseLoaded && artworksUnsubscribe) {
+      scheduleArtworkRetry();
+      return true;
+    }
     if (artworksLoadPromise) return artworksLoadPromise;
 
-    // reviews.js sayfada Firebase SDK'dan önce yüklenebiliyor. Firebase henüz hazır
-    // değilken Promise oluşturursak çözülmüş Promise değişkende kalıyor ve
-    // `ness:firebase-ready` geldiğinde gerçek Firestore sorgusu hiç başlamıyor.
-    // Önce hazır olup olmadığını kontrol ederek Firebase hazır olduğunda yeniden
-    // denenebilmesini garanti ediyoruz.
-    const app = getFirebaseApp();
-    if (!app || typeof firebase === 'undefined' || !firebase.firestore) return false;
+    const db = getFirestore();
+    if (!db) {
+      scheduleArtworkRetry(900);
+      return false;
+    }
 
     artworksLoadPromise = new Promise((resolve) => {
       let settled = false;
@@ -244,23 +322,30 @@
       };
 
       try {
-        // orderBy kullanmıyoruz: Firestore'da `order` alanı olmayan yeni eserler
-        // orderBy sorgusunun dışında kalabildiği için koleksiyonun TAMAMINI dinliyoruz.
-        // Sıralama setArtworks içinde istemci tarafında yapılıyor.
-        artworksUnsubscribe = firebase.firestore().collection(ARTWORKS_COLLECTION).onSnapshot((snapshot) => {
-          const items = snapshot.docs.map((doc) => normalizeArtwork(doc.data(), doc.id));
-          setArtworks(items);
-          artworksFirebaseLoaded = true;
-          finish(true);
-        }, (error) => {
-          console.warn('Galerideki eserler okunamadı:', error);
-          artworksUnsubscribe = null;
-          finish(false);
-        });
+        // orderBy yok: order alani olmayan tum galeri eserleri de gelir.
+        artworksUnsubscribe = db.collection(ARTWORKS_COLLECTION)
+          .onSnapshot({ includeMetadataChanges: true }, (snapshot) => {
+            applyArtworkSnapshot(snapshot);
+            finish(true);
+            scheduleArtworkRetry();
+          }, (error) => {
+            console.warn('Galerideki eserler okunamadı:', error);
+            artworksUnsubscribe = null;
+            artworksFirebaseLoaded = false;
+            artworksRemoteConfirmed = false;
+            finish(false);
+            fetchArtworksOnce();
+            scheduleArtworkRetry(1000);
+          });
+        scheduleArtworkRetry();
       } catch (error) {
         console.warn('Galerideki eserler okunamadı:', error);
         artworksUnsubscribe = null;
+        artworksFirebaseLoaded = false;
+        artworksRemoteConfirmed = false;
         finish(false);
+        fetchArtworksOnce();
+        scheduleArtworkRetry(1000);
       }
     });
 
@@ -468,24 +553,136 @@
     }).join('');
   };
 
-  const watchReviews = () => {
-    if (reviewsUnsubscribe) return true;
-    const app = getFirebaseApp();
-    if (!app || !firebase.firestore) return false;
+  let reviewsReconnectTimer = null;
+  let reviewsOneShotTimer = null;
+  let reviewsReconnectAttempt = 0;
+  let reviewsFetchPromise = null;
+  let reviewsRemoteConfirmed = false;
+  let reviewsProbeAttempt = 0;
+  const REVIEWS_RECONNECT_DELAYS = [900, 2200, 5000, 10000, 15000];
+  const REVIEWS_PROBE_DELAYS = [1400, 3500, 8000, 15000, 25000];
 
-    reviewsUnsubscribe = firebase.firestore().collection(PUBLIC_REVIEWS_COLLECTION)
-      .onSnapshot((snapshot) => {
-        reviews = snapshot.docs.map((doc) => normalizeReview(doc.data(), doc.id));
-        renderReviews();
-        scheduleReviewsCacheWrite();
-      }, (error) => {
-        reviewsUnsubscribe = null;
-        console.warn('Değerlendirmeler okunamadı:', error);
-        if (reviews.length) return;
-        const list = $('[data-public-review-list]');
-        if (list) list.innerHTML = '<div class="review-empty-state"><h3>Değerlendirmeler şu anda yüklenemiyor.</h3><p>Lütfen sayfayı daha sonra yeniden açın.</p></div>';
+  const isRemoteSnapshot = (snapshot) => !(snapshot && snapshot.metadata && snapshot.metadata.fromCache);
+
+  const applyReviewsSnapshot = (snapshot) => {
+    const incoming = snapshot.docs.map((doc) => normalizeReview(doc.data(), doc.id));
+    const remote = isRemoteSnapshot(snapshot);
+
+    // Telefonda ilk callback bazen eski/eksik yerel Firestore cache'i olabilir.
+    // Daha buyuk bir listeyi eksik cache ile kucultme; sunucu cevabi geldiginde
+    // ise silinmeler dahil gercek koleksiyonu aynen uygula.
+    if (remote || !reviews.length || incoming.length >= reviews.length) {
+      reviews = incoming;
+      renderReviews();
+    }
+
+    if (remote) {
+      reviewsRemoteConfirmed = true;
+      reviewsReconnectAttempt = 0;
+      reviewsProbeAttempt = 0;
+      if (reviewsReconnectTimer) {
+        window.clearTimeout(reviewsReconnectTimer);
+        reviewsReconnectTimer = null;
+      }
+      if (reviewsOneShotTimer) {
+        window.clearTimeout(reviewsOneShotTimer);
+        reviewsOneShotTimer = null;
+      }
+      // Sadece sunucu tarafindan dogrulanan listeyi yeni cache'e yaz.
+      scheduleReviewsCacheWrite();
+    }
+    return remote;
+  };
+
+  const fetchReviewsOnce = () => {
+    if (reviewsRemoteConfirmed) return Promise.resolve(true);
+    if (reviewsFetchPromise) return reviewsFetchPromise;
+    const db = getFirestore();
+    if (!db) return Promise.resolve(false);
+
+    reviewsFetchPromise = db.collection(PUBLIC_REVIEWS_COLLECTION).get({ source: 'server' })
+      .then((snapshot) => {
+        return applyReviewsSnapshot(snapshot);
+      })
+      .catch((error) => {
+        console.warn('Değerlendirmeler tek seferlik okunamadı:', error);
+        return false;
+      })
+      .finally(() => {
+        reviewsFetchPromise = null;
       });
-    return true;
+    return reviewsFetchPromise;
+  };
+
+  const scheduleReviewsReconnect = (immediate = false) => {
+    if (reviewsUnsubscribe || reviewsReconnectTimer || document.hidden) return;
+    if ('onLine' in navigator && !navigator.onLine) return;
+    const index = Math.min(reviewsReconnectAttempt, REVIEWS_RECONNECT_DELAYS.length - 1);
+    const wait = immediate ? 0 : REVIEWS_RECONNECT_DELAYS[index];
+    reviewsReconnectTimer = window.setTimeout(() => {
+      reviewsReconnectTimer = null;
+      reviewsReconnectAttempt += 1;
+      watchReviews();
+    }, wait);
+  };
+
+  const scheduleReviewsOneShot = (delay = null) => {
+    if (reviewsRemoteConfirmed || reviewsOneShotTimer || reviewsFetchPromise) return;
+    const index = Math.min(reviewsProbeAttempt, REVIEWS_PROBE_DELAYS.length - 1);
+    const wait = delay === null ? REVIEWS_PROBE_DELAYS[index] : Math.max(0, delay);
+    reviewsOneShotTimer = window.setTimeout(() => {
+      reviewsOneShotTimer = null;
+      reviewsProbeAttempt += 1;
+      fetchReviewsOnce().then((remote) => {
+        if (!remote && !reviewsRemoteConfirmed) {
+          // Listener calisiyor olsa bile sunucu dogrulamasi gelene kadar seyrek
+          // araliklarla tekrar dene. Kullanici yenilemek zorunda kalmaz.
+          scheduleReviewsOneShot();
+          if (!reviewsUnsubscribe) scheduleReviewsReconnect();
+        }
+      });
+    }, wait);
+  };
+
+  const watchReviews = () => {
+    if (reviewsUnsubscribe) {
+      scheduleReviewsOneShot();
+      return true;
+    }
+    const db = getFirestore();
+    if (!db) {
+      scheduleReviewsReconnect();
+      return false;
+    }
+
+    try {
+      reviewsUnsubscribe = db.collection(PUBLIC_REVIEWS_COLLECTION)
+        .onSnapshot({ includeMetadataChanges: true }, (snapshot) => {
+          applyReviewsSnapshot(snapshot);
+          // Cache callback'i geldiyse canli listener'a zaman ver; 1.4 sn sonra
+          // hala sunucu cevabi yoksa tek seferlik get() sessizce destek olur.
+          scheduleReviewsOneShot();
+        }, (error) => {
+          reviewsUnsubscribe = null;
+          reviewsRemoteConfirmed = false;
+          console.warn('Değerlendirmeler canlı bağlantısı kesildi:', error);
+
+          // Kullaniciya hata karti basma. Daha once gelen yorumlar ekranda kalir;
+          // hic veri yoksa HTML'deki "hazırlanıyor" durumu korunur. Sistem kendi
+          // kendine yeniden baglanir ve kullanicinin sayfayi yenilemesi gerekmez.
+          fetchReviewsOnce();
+          scheduleReviewsReconnect();
+        });
+      scheduleReviewsOneShot();
+      return true;
+    } catch (error) {
+      reviewsUnsubscribe = null;
+      reviewsRemoteConfirmed = false;
+      console.warn('Değerlendirme canlı takibi başlatılamadı:', error);
+      fetchReviewsOnce();
+      scheduleReviewsReconnect();
+      return false;
+    }
   };
 
   const setFormStatus = (message, type = 'info') => {
@@ -902,9 +1099,18 @@
     watchReviews();
   };
 
-  window.addEventListener('ness:firebase-ready', () => {
+  const recoverFirebaseData = () => {
     loadArtworks();
-    watchReviews();
+    if (!reviewsUnsubscribe) watchReviews();
+    if (!reviewsRemoteConfirmed) fetchReviewsOnce();
+    if (!artworksRemoteConfirmed) fetchArtworksOnce();
+  };
+
+  window.addEventListener('ness:firebase-ready', recoverFirebaseData);
+  window.addEventListener('online', recoverFirebaseData);
+  window.addEventListener('pageshow', recoverFirebaseData);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') recoverFirebaseData();
   });
 
   init();

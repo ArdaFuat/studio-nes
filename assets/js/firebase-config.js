@@ -31,9 +31,52 @@ window.NESS_FIREBASE_IS_CONFIGURED = function () {
   );
 };
 
+// Firebase'i sayfadaki diger kodlardan once tek noktadan baslat.
+// Firestore'un varsayilan streaming tasimasi bazi mobil Safari / operator
+// kombinasyonlarinda ilk acilista kopabiliyor. Auto-detect gerekli oldugunda
+// long-polling'e gecerek ayni verinin yenileme gerektirmeden gelmesini saglar.
+window.NESS_GET_FIRESTORE = function () {
+  try {
+    if (typeof firebase === 'undefined' || !window.NESS_FIREBASE_IS_CONFIGURED()) return null;
+    if (!firebase.apps.length) firebase.initializeApp(window.NESS_FIREBASE_CONFIG);
+    const db = firebase.firestore();
 
-// Firebase SDK bu dosyadan önce yüklendiği için bekleyen hızlı başlangıç
-// kodlarına canlı bağlantının artık hazır olduğunu bildirir.
+    if (!window.__NESS_FIRESTORE_TRANSPORT_CONFIGURED) {
+      try {
+        const mobileTransport = Boolean(
+          (window.matchMedia && window.matchMedia('(max-width: 820px)').matches) ||
+          /Android|iPhone|iPod/i.test(navigator.userAgent || '')
+        );
+        db.settings(mobileTransport ? {
+          // Mobil operator/proxy katmanlarinda streaming baglantisinin ilk acilista
+          // dusmesini engellemek icin telefonda long-polling'i dogrudan kullan.
+          experimentalForceLongPolling: true,
+          experimentalLongPollingOptions: { timeoutSeconds: 25 },
+          ignoreUndefinedProperties: true
+        } : {
+          experimentalAutoDetectLongPolling: true,
+          ignoreUndefinedProperties: true
+        });
+      } catch (error) {
+        // Firestore baska bir kod tarafindan coktan kullanilmaya basladiysa settings
+        // yeniden verilemez. Bu durumda mevcut instance ile devam etmek guvenlidir.
+        if (!/already|started|settings/i.test(String(error && error.message || error))) {
+          console.warn('Firestore mobil baglanti ayari uygulanamadi:', error);
+        }
+      }
+      window.__NESS_FIRESTORE_TRANSPORT_CONFIGURED = true;
+    }
+
+    return db;
+  } catch (error) {
+    console.warn('Firebase baglantisi hazirlanamadi:', error);
+    return null;
+  }
+};
+
+// SDK bu dosyadan once yukleniyor; init burada senkron yapilir. Sonraki tick'te
+// tum sayfa modullerine hazir sinyali verilir.
+window.NESS_GET_FIRESTORE();
 window.setTimeout(function () {
   window.dispatchEvent(new Event('ness:firebase-ready'));
 }, 0);
