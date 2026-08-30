@@ -531,6 +531,8 @@
     unsubscribeArtworks = db().collection(FIREBASE_ARTWORKS_COLLECTION).orderBy('order', 'asc')
       .onSnapshot((snapshot) => {
         artworks = snapshot.docs.map((doc, index) => normalizeArtwork({ id: doc.id, ...doc.data() }, index));
+        window.NESS_ADMIN_ARTWORKS = artworks;
+        window.dispatchEvent(new CustomEvent('ness:admin-artworks', { detail: artworks }));
         renderList();
       }, (error) => setNotice(`Ürünler okunamadı: ${error.message}`, 'error'));
   };

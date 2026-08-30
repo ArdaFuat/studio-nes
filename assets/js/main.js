@@ -15,8 +15,14 @@
   const PUBLIC_CACHE_KEY = 'studio-nes-public-cache-v6-cat-dedupe';
   let hasPaintedOnce = false;
   let lastRenderSignature = '';
+  let lastArtworkSignature = '';
+  let lastFairsSignature = '';
   let realtimeStarted = false;
   const mobileFastQuery = window.matchMedia('(max-width: 760px)');
+  const pageNeedsArtworks = Boolean(document.querySelector('[data-featured-grid], [data-gallery-grid], [data-custom-grid], [data-hero-slider], [data-art-dialog]'));
+  const pageNeedsFairs = Boolean(document.querySelector('[data-fairs-grid], [data-fair-dialog]'));
+  let realtimeInitialPromise = null;
+  let scheduledCacheWrite = false;
 
 
   const readPublicCache = () => {
@@ -33,16 +39,32 @@
 
   const writePublicCache = () => {
     try {
+      const previous = readPublicCache() || {};
       const payload = {
         cachedAt: new Date().toISOString(),
         siteContent,
-        artworks: normalizeArtworks(currentArtworks).slice(0, 80),
-        fairs: normalizeFairs(currentFairs).slice(0, 40)
+        artworks: pageNeedsArtworks
+          ? normalizeArtworks(currentArtworks).slice(0, 80)
+          : (Array.isArray(previous.artworks) ? previous.artworks : normalizeArtworks(currentArtworks).slice(0, 80)),
+        fairs: pageNeedsFairs
+          ? normalizeFairs(currentFairs).slice(0, 40)
+          : (Array.isArray(previous.fairs) ? previous.fairs : normalizeFairs(currentFairs).slice(0, 40))
       };
       window.localStorage?.setItem(PUBLIC_CACHE_KEY, JSON.stringify(payload));
     } catch (_) {
       // localStorage doluysa site normal şekilde Firebase'den devam eder.
     }
+  };
+
+  const schedulePublicCacheWrite = () => {
+    if (scheduledCacheWrite) return;
+    scheduledCacheWrite = true;
+    const commit = () => {
+      scheduledCacheWrite = false;
+      writePublicCache();
+    };
+    if ('requestIdleCallback' in window) window.requestIdleCallback(commit, { timeout: 1200 });
+    else window.setTimeout(commit, 80);
   };
 
   const hasUsefulCache = (cache) => Boolean(
@@ -87,6 +109,14 @@
     artworks: normalizeArtworks(currentArtworks).map(({ updatedAt, updatedBy, ...art }) => art),
     fairs: normalizeFairs(currentFairs).map(({ updatedAt, updatedBy, ...fair }) => fair)
   });
+
+  const getArtworkSignature = () => stableStringify(
+    normalizeArtworks(currentArtworks).map(({ updatedAt, updatedBy, ...art }) => art)
+  );
+
+  const getFairsSignature = () => stableStringify(
+    normalizeFairs(currentFairs).map(({ updatedAt, updatedBy, ...fair }) => fair)
+  );
 
   function clone(value) {
     if (value === undefined || value === null) return value;
@@ -660,6 +690,8 @@
     const signature = getRenderSignature();
     if (!force && signature && signature === lastRenderSignature) return false;
     lastRenderSignature = signature;
+    lastArtworkSignature = getArtworkSignature();
+    lastFairsSignature = getFairsSignature();
 
     renderTextContent();
     renderGalleryFilters();
@@ -673,38 +705,104 @@
     return true;
   };
 
-  const setupRealtime = () => {
-    if (realtimeStarted) return true;
+  const setupRealtime = ({ deferInitialRender = false } = {}) => {
+    if (realtimeStarted) return realtimeInitialPromise || Promise.resolve(true);
     const app = getFirebaseApp();
-    if (!app || !firebase.firestore) return false;
+    if (!app || !firebase.firestore) return Promise.resolve(false);
+
     realtimeStarted = true;
+    const pending = new Set(['content']);
+    if (pageNeedsArtworks) pending.add('artworks');
+    if (pageNeedsFairs) pending.add('fairs');
+
+    let resolveInitial;
+    let initialSettled = false;
+    realtimeInitialPromise = new Promise((resolve) => { resolveInitial = resolve; });
+
+    const finishInitialSource = (source) => {
+      if (initialSettled || !pending.has(source)) return;
+      pending.delete(source);
+      if (pending.size) return;
+      initialSettled = true;
+      if (deferInitialRender) {
+        renderAllContent({ force: true });
+        schedulePublicCacheWrite();
+      }
+      resolveInitial?.(true);
+      resolveInitial = null;
+    };
+
+    const renderLiveUpdate = (source) => {
+      if (deferInitialRender && pending.size) return;
+      let didRender = false;
+      if (source === 'artworks') {
+        const signature = getArtworkSignature();
+        if (signature !== lastArtworkSignature) {
+          lastArtworkSignature = signature;
+          renderPageArtworks(currentArtworks);
+          observeReveals();
+          didRender = true;
+        }
+      } else if (source === 'fairs') {
+        const signature = getFairsSignature();
+        if (signature !== lastFairsSignature) {
+          lastFairsSignature = signature;
+          renderFairs(currentFairs);
+          didRender = true;
+        }
+      } else {
+        didRender = renderAllContent();
+      }
+      if (didRender) {
+        lastRenderSignature = getRenderSignature();
+        schedulePublicCacheWrite();
+      }
+    };
+
+    const handleError = (source, label) => (error) => {
+      console.warn(label, error);
+      finishInitialSource(source);
+    };
+
     try {
-      firebase.firestore().collection(FIREBASE_ARTWORKS_COLLECTION).orderBy('order', 'asc')
-        .onSnapshot((snapshot) => {
-          if (snapshot.empty) return;
-          const items = snapshot.docs.map((doc, index) => normalizeArtwork({ id: doc.id, ...doc.data() }, index));
-          currentArtworks = normalizeArtworks(items);
-          if (renderAllContent()) writePublicCache();
-        }, (error) => console.warn('Firebase ürün canlı takip kapandı:', error));
+      if (pageNeedsArtworks) {
+        firebase.firestore().collection(FIREBASE_ARTWORKS_COLLECTION).orderBy('order', 'asc')
+          .onSnapshot((snapshot) => {
+            if (!snapshot.empty) {
+              const items = snapshot.docs.map((doc, index) => normalizeArtwork({ id: doc.id, ...doc.data() }, index));
+              currentArtworks = normalizeArtworks(items);
+            }
+            const wasInitial = pending.has('artworks');
+            finishInitialSource('artworks');
+            if (!wasInitial || !deferInitialRender) renderLiveUpdate('artworks');
+          }, handleError('artworks', 'Firebase ürün canlı takip kapandı:'));
+      }
 
       firebase.firestore().collection(FIREBASE_CONTENT_COLLECTION).doc(FIREBASE_CONTENT_DOC)
         .onSnapshot((doc) => {
-          if (!doc.exists) return;
-          siteContent = deepMerge(typeof DEFAULT_SITE_CONTENT !== 'undefined' ? DEFAULT_SITE_CONTENT : {}, doc.data());
-          if (renderAllContent()) writePublicCache();
-        }, (error) => console.warn('Firebase site içeriği canlı takip kapandı:', error));
+          if (doc.exists) siteContent = deepMerge(typeof DEFAULT_SITE_CONTENT !== 'undefined' ? DEFAULT_SITE_CONTENT : {}, doc.data());
+          const wasInitial = pending.has('content');
+          finishInitialSource('content');
+          if (!wasInitial || !deferInitialRender) renderLiveUpdate('content');
+        }, handleError('content', 'Firebase site içeriği canlı takip kapandı:'));
 
-      firebase.firestore().collection(FIREBASE_FAIRS_COLLECTION).orderBy('order', 'asc')
-        .onSnapshot((snapshot) => {
-          currentFairs = normalizeFairs(snapshot.docs.map((doc, index) => normalizeFair({ id: doc.id, ...doc.data() }, index)));
-          if (renderAllContent()) writePublicCache();
-        }, (error) => console.warn('Firebase fuar canlı takip kapandı:', error));
+      if (pageNeedsFairs) {
+        firebase.firestore().collection(FIREBASE_FAIRS_COLLECTION).orderBy('order', 'asc')
+          .onSnapshot((snapshot) => {
+            currentFairs = normalizeFairs(snapshot.docs.map((doc, index) => normalizeFair({ id: doc.id, ...doc.data() }, index)));
+            const wasInitial = pending.has('fairs');
+            finishInitialSource('fairs');
+            if (!wasInitial || !deferInitialRender) renderLiveUpdate('fairs');
+          }, handleError('fairs', 'Firebase fuar canlı takip kapandı:'));
+      }
     } catch (error) {
       realtimeStarted = false;
       console.warn('Firebase canlı takip başlatılamadı:', error);
-      return false;
+      resolveInitial?.(false);
+      resolveInitial = null;
     }
-    return true;
+
+    return realtimeInitialPromise;
   };
 
   const updateFairLightbox = () => {
@@ -814,7 +912,7 @@
     currentFairs = loadedFairs;
     currentArtworks = loadedArtworks;
     const didRender = renderAllContent({ force });
-    if (didRender) writePublicCache();
+    if (didRender) schedulePublicCacheWrite();
     return didRender;
   };
 
@@ -870,8 +968,15 @@
     }
 
     try {
-      const { loadedContent, loadedFairs, loadedArtworks } = await loadLiveState();
-      applyLoadedState(loadedContent, loadedFairs, loadedArtworks, { force: !paintedFromCache });
+      if (!paintedFromCache) {
+        siteContent = deepMerge(defaults, siteContent || {});
+        currentFairs = normalizeFairs(typeof DEFAULT_FAIRS !== 'undefined' ? DEFAULT_FAIRS : []);
+        currentArtworks = normalizeArtworks(typeof ARTWORKS !== 'undefined' ? ARTWORKS : []);
+      }
+
+      const connected = await setupRealtime({ deferInitialRender: !paintedFromCache });
+      if (!connected && !paintedFromCache) renderAllContent({ force: true });
+
       if (!paintedFromCache) {
         setupDialogsAndClicks();
         markSiteReady();
@@ -886,8 +991,6 @@
         setupDialogsAndClicks();
         markSiteReady();
       }
-    } finally {
-      setupRealtime();
     }
   };
 

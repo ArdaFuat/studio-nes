@@ -26,6 +26,10 @@
   let artworkPickerReturnFocus = null;
   let featuredClickSuppressedUntil = 0;
   let reviewsUnsubscribe = null;
+  let artworksLoadPromise = null;
+  let artworksFirebaseLoaded = false;
+  let reviewsCacheWriteScheduled = false;
+  const reviewDateFormatter = new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
   const featuredMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
 
   const $ = (selector) => document.querySelector(selector);
@@ -87,6 +91,17 @@
     }
   };
 
+  const scheduleReviewsCacheWrite = () => {
+    if (reviewsCacheWriteScheduled) return;
+    reviewsCacheWriteScheduled = true;
+    const commit = () => {
+      reviewsCacheWriteScheduled = false;
+      writeReviewsCache();
+    };
+    if ('requestIdleCallback' in window) window.requestIdleCallback(commit, { timeout: 1200 });
+    else window.setTimeout(commit, 80);
+  };
+
   const readCachedArtworks = () => {
     const cached = readJsonCache(PUBLIC_CACHE_KEY);
     return Array.isArray(cached?.artworks) ? cached.artworks.map((art) => normalizeArtwork(art, art.id)) : [];
@@ -102,7 +117,7 @@
   const formatDate = (value) => {
     const date = toDate(value);
     if (!date) return '';
-    return new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }).format(date);
+    return reviewDateFormatter.format(date);
   };
 
   const normalizeArtwork = (art = {}, id = '') => ({
@@ -175,8 +190,9 @@
       return;
     }
 
+    const selectedId = selectedArtwork?.id || $('#reviewArtwork')?.value || '';
     grid.innerHTML = visible.map((art) => {
-      const isSelected = selectedArtwork?.id === art.id || $('#reviewArtwork')?.value === art.id;
+      const isSelected = selectedId === art.id;
       const meta = [art.technique, art.size].filter(Boolean).join(' · ');
       return `
         <button class="review-artwork-picker-card${isSelected ? ' is-selected' : ''}" type="button" data-artwork-pick="${escapeHtml(art.id)}" aria-pressed="${isSelected ? 'true' : 'false'}">
@@ -206,18 +222,27 @@
     const cachedItems = readCachedArtworks();
     const fallbackItems = typeof ARTWORKS !== 'undefined' && Array.isArray(ARTWORKS) ? ARTWORKS : [];
     if (!artworks.length) setArtworks(cachedItems.length ? cachedItems : fallbackItems);
+    if (artworksFirebaseLoaded) return true;
+    if (artworksLoadPromise) return artworksLoadPromise;
 
-    const app = getFirebaseApp();
-    if (!app || !firebase.firestore) return false;
-    try {
-      const snapshot = await firebase.firestore().collection(ARTWORKS_COLLECTION).orderBy('order', 'asc').get();
-      const items = snapshot.docs.map((doc) => normalizeArtwork(doc.data(), doc.id));
-      if (items.length) setArtworks(items);
-      return true;
-    } catch (error) {
-      console.warn('Galerideki eserler okunamadı:', error);
-      return false;
-    }
+    artworksLoadPromise = (async () => {
+      const app = getFirebaseApp();
+      if (!app || !firebase.firestore) return false;
+      try {
+        const snapshot = await firebase.firestore().collection(ARTWORKS_COLLECTION).orderBy('order', 'asc').get();
+        const items = snapshot.docs.map((doc) => normalizeArtwork(doc.data(), doc.id));
+        if (items.length) setArtworks(items);
+        artworksFirebaseLoaded = true;
+        return true;
+      } catch (error) {
+        console.warn('Galerideki eserler okunamadı:', error);
+        return false;
+      } finally {
+        artworksLoadPromise = null;
+      }
+    })();
+
+    return artworksLoadPromise;
   };
 
   const renderArtworkPreview = () => {
@@ -342,7 +367,7 @@
             <span><strong>${escapeHtml(review.publicName)}</strong><small>${escapeHtml(review.city)}</small></span>
           </div>
           <div class="featured-review-artwork">
-            <img src="${escapeHtml(review.artworkImage)}" alt="${escapeHtml(review.artworkTitle)}">
+            <img src="${escapeHtml(review.artworkImage)}" alt="${escapeHtml(review.artworkTitle)}" decoding="async">
             <span><small>Satın alınan eser</small><strong>${escapeHtml(review.artworkTitle)}</strong></span>
           </div>
         </div>
@@ -397,13 +422,15 @@
       return;
     }
 
-    list.innerHTML = items.map((review) => `
+    list.innerHTML = items.map((review) => {
+      const publishedDate = formatDate(review.publishedAt);
+      return `
       <article class="public-review-card review-card-openable" data-review-detail-id="${escapeHtml(review.id)}" role="button" tabindex="0" aria-label="${escapeHtml(review.publicName)} tarafından yazılan yorumu ve eser detaylarını aç">
         <div class="public-review-top">
           <div class="review-author-mark" aria-hidden="true">${escapeHtml(review.publicName.charAt(0).toLocaleUpperCase('tr-TR') || 'S')}</div>
           <div class="review-author-copy">
             <strong>${escapeHtml(review.publicName)}</strong>
-            <span>${escapeHtml(review.city)}${formatDate(review.publishedAt) ? ` · ${escapeHtml(formatDate(review.publishedAt))}` : ''}</span>
+            <span>${escapeHtml(review.city)}${publishedDate ? ` · ${escapeHtml(publishedDate)}` : ''}</span>
           </div>
           ${renderStars(review.rating)}
         </div>
@@ -412,10 +439,11 @@
           ${renderReviewDetailButton(review)}
         </div>
         <div class="review-artwork-chip">
-          <img src="${escapeHtml(review.artworkImage)}" alt="${escapeHtml(review.artworkTitle)}">
+          <img src="${escapeHtml(review.artworkImage)}" alt="${escapeHtml(review.artworkTitle)}" loading="lazy" decoding="async">
           <span><small>Satın alınan eser</small><strong>${escapeHtml(review.artworkTitle)}</strong></span>
         </div>
-      </article>`).join('');
+      </article>`;
+    }).join('');
   };
 
   const watchReviews = () => {
@@ -427,7 +455,7 @@
       .onSnapshot((snapshot) => {
         reviews = snapshot.docs.map((doc) => normalizeReview(doc.data(), doc.id));
         renderReviews();
-        writeReviewsCache();
+        scheduleReviewsCacheWrite();
       }, (error) => {
         reviewsUnsubscribe = null;
         console.warn('Değerlendirmeler okunamadı:', error);

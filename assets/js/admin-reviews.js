@@ -7,8 +7,11 @@
   let submissions = [];
   let activeFilter = 'all';
   let unsubscribe = null;
-  let unsubscribeArtworks = null;
+  let artworkBridgeBound = false;
   let artworkRecords = new Map();
+  let artworkList = [];
+  let artworkPickerReviewId = '';
+  let artworkPickerReturnFocus = null;
 
   const $ = (selector) => document.querySelector(selector);
   const escapeHtml = (value = '') => String(value)
@@ -36,6 +39,8 @@
     } catch (_) { return null; }
   };
 
+  const adminReviewDateFormatter = new Intl.DateTimeFormat('tr-TR', { dateStyle: 'medium', timeStyle: 'short' });
+
   const isAdmin = (user) => Boolean(user && ADMIN_EMAILS.includes(String(user.email || '').toLowerCase()));
   const toDate = (value) => {
     if (!value) return null;
@@ -46,7 +51,7 @@
   const timestamp = (item) => toDate(item.createdAt)?.getTime() || toDate(item.submittedAt)?.getTime() || 0;
   const formatDate = (value) => {
     const date = toDate(value);
-    return date ? new Intl.DateTimeFormat('tr-TR', { dateStyle: 'medium', timeStyle: 'short' }).format(date) : 'Tarih bilgisi yok';
+    return date ? adminReviewDateFormatter.format(date) : 'Tarih bilgisi yok';
   };
 
   const normalize = (data = {}, id = '') => ({
@@ -95,13 +100,29 @@
   const artworkImageFor = (item) => artworkFor(item).image;
   const artworkTitleFor = (item) => artworkFor(item).title || item.artworkTitle;
 
+  const applyArtworkRecords = (items) => {
+    const records = (Array.isArray(items) ? items : []).map((data, index) => ({
+      id: String(data.id || ''),
+      title: String(data.title || 'Studio Nes eseri'),
+      image: safeUrl(data.image) || 'assets/img/ness-logo.png',
+      size: String(data.size || ''),
+      technique: String(data.technique || ''),
+      category: String(data.category || ''),
+      hidden: Boolean(data.hidden),
+      order: Number.isFinite(Number(data.order)) ? Number(data.order) : index
+    }));
+    artworkRecords = new Map(records.map((art) => [art.id, art]));
+    artworkList = records.filter((art) => !art.hidden).sort((a, b) => a.order - b.order);
+    render();
+    if (artworkPickerReviewId) renderAdminArtworkPicker($('[data-admin-review-artwork-search]')?.value || '');
+  };
+
   const watchArtworks = () => {
-    if (unsubscribeArtworks) unsubscribeArtworks();
-    unsubscribeArtworks = firebase.firestore().collection(ARTWORKS_COLLECTION)
-      .onSnapshot((snapshot) => {
-        artworkRecords = new Map(snapshot.docs.map((doc) => [doc.id, { title: String(doc.data().title || 'Studio Nes eseri'), image: safeUrl(doc.data().image) || 'assets/img/ness-logo.png' }]));
-        render();
-      }, (error) => console.warn('Yorum eser görselleri okunamadı:', error));
+    if (!artworkBridgeBound) {
+      artworkBridgeBound = true;
+      window.addEventListener('ness:admin-artworks', (event) => applyArtworkRecords(event.detail));
+    }
+    if (Array.isArray(window.NESS_ADMIN_ARTWORKS)) applyArtworkRecords(window.NESS_ADMIN_ARTWORKS);
   };
 
   const updateStats = () => {
@@ -151,7 +172,12 @@
       const featuredIndex = featured.findIndex((featuredItem) => featuredItem.id === item.id);
       return `
         <article class="admin-review-card ${item.approved ? 'is-approved' : 'is-pending'} ${item.featured ? 'is-featured' : ''}">
-          <img class="admin-review-art" src="${escapeHtml(artworkImageFor(item))}" alt="${escapeHtml(artworkTitleFor(item))}">
+          <div class="admin-review-art-wrap">
+            <img class="admin-review-art" src="${escapeHtml(artworkImageFor(item))}" alt="${escapeHtml(artworkTitleFor(item))}" decoding="async">
+            <button class="admin-review-art-edit" type="button" data-review-action="edit-artwork" data-id="${escapeHtml(item.id)}" aria-label="Yorumdaki eseri değiştir" title="Eseri değiştir">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 16.5V20h3.5L18.8 8.7l-3.5-3.5L4 16.5Zm17-10.6a.95.95 0 0 0 0-1.35l-1.55-1.55a.95.95 0 0 0-1.35 0l-1.55 1.55 3.5 3.5L21 5.9Z"/></svg>
+            </button>
+          </div>
           <div class="admin-review-body">
             <div class="admin-review-head">
               <div>
@@ -199,6 +225,113 @@
           </div>
         </article>`;
     }).join('');
+  };
+
+  const normalizeSearchText = (value = '') => String(value || '').toLocaleLowerCase('tr-TR').trim();
+
+  const renderAdminArtworkPicker = (query = '') => {
+    const grid = $('[data-admin-review-artwork-grid]');
+    const count = $('[data-admin-review-artwork-count]');
+    if (!grid) return;
+
+    const current = submissions.find((item) => item.id === artworkPickerReviewId);
+    const selectedId = current?.artworkId || '';
+    const normalizedQuery = normalizeSearchText(query);
+    const visible = normalizedQuery
+      ? artworkList.filter((art) => normalizeSearchText([art.title, art.technique, art.size, art.category].join(' ')).includes(normalizedQuery))
+      : artworkList;
+
+    if (count) count.textContent = `${visible.length} eser`;
+    if (!visible.length) {
+      grid.innerHTML = `
+        <div class="review-artwork-picker-empty">
+          <span aria-hidden="true">✦</span>
+          <strong>${artworkList.length ? 'Aramanızla eşleşen eser bulunamadı.' : 'Galeride gösterilecek eser bulunamadı.'}</strong>
+          <small>${artworkList.length ? 'Başka bir eser adıyla aramayı deneyin.' : 'Galerideki ürünler burada görünecek.'}</small>
+        </div>`;
+      return;
+    }
+
+    grid.innerHTML = visible.map((art) => {
+      const isSelected = selectedId === art.id;
+      const meta = [art.technique, art.size].filter(Boolean).join(' · ');
+      return `
+        <button class="review-artwork-picker-card${isSelected ? ' is-selected' : ''}" type="button" data-admin-review-artwork-pick="${escapeHtml(art.id)}" aria-pressed="${isSelected ? 'true' : 'false'}">
+          <span class="review-artwork-picker-card-image">
+            <img src="${escapeHtml(art.image)}" alt="${escapeHtml(art.title)}" loading="lazy" decoding="async">
+            <span class="review-artwork-picker-card-check" aria-hidden="true">✓</span>
+          </span>
+          <span class="review-artwork-picker-card-copy">
+            <strong>${escapeHtml(art.title)}</strong>
+            <small>${escapeHtml(meta || 'Studio Nes eseri')}</small>
+          </span>
+        </button>`;
+    }).join('');
+  };
+
+  const openAdminArtworkPicker = (reviewId, trigger) => {
+    const item = submissions.find((entry) => entry.id === reviewId);
+    const modal = $('[data-admin-review-artwork-modal]');
+    if (!item || !modal) return;
+
+    artworkPickerReviewId = reviewId;
+    artworkPickerReturnFocus = trigger || document.activeElement;
+    const search = $('[data-admin-review-artwork-search]');
+    if (search) search.value = '';
+    const currentTitle = $('[data-admin-review-artwork-current]');
+    if (currentTitle) currentTitle.textContent = `Şu an: ${artworkTitleFor(item)}`;
+    renderAdminArtworkPicker('');
+
+    modal.removeAttribute('hidden');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('review-artwork-picker-open');
+    requestAnimationFrame(() => modal.classList.add('is-open'));
+    window.setTimeout(() => search?.focus(), 80);
+  };
+
+  const closeAdminArtworkPicker = () => {
+    const modal = $('[data-admin-review-artwork-modal]');
+    if (!modal || modal.hasAttribute('hidden')) return;
+    modal.classList.remove('is-open');
+    modal.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('review-artwork-picker-open');
+    const focusTarget = artworkPickerReturnFocus;
+    artworkPickerReviewId = '';
+    artworkPickerReturnFocus = null;
+    window.setTimeout(() => {
+      modal.setAttribute('hidden', '');
+      focusTarget?.focus?.();
+    }, 190);
+  };
+
+  const updateReviewArtwork = async (reviewId, artworkId) => {
+    const item = submissions.find((entry) => entry.id === reviewId);
+    const artwork = artworkRecords.get(artworkId);
+    if (!item || !artwork || artwork.hidden) throw new Error('Seçilen eser galeride bulunamadı.');
+    if (item.artworkId === artwork.id) {
+      setNotice('Bu eser zaten yorumda seçili.', 'info');
+      return;
+    }
+
+    const firestore = firebase.firestore();
+    const batch = firestore.batch();
+    const payload = {
+      artworkId: artwork.id,
+      artworkTitle: artwork.title,
+      artworkImage: artwork.image,
+      artworkUpdatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      artworkUpdatedBy: firebase.auth().currentUser?.email || ''
+    };
+    batch.update(firestore.collection(SUBMISSIONS_COLLECTION).doc(reviewId), payload);
+    if (item.approved) {
+      batch.update(firestore.collection(PUBLIC_REVIEWS_COLLECTION).doc(reviewId), {
+        artworkId: artwork.id,
+        artworkTitle: artwork.title,
+        artworkImage: artwork.image
+      });
+    }
+    await batch.commit();
+    setNotice(`Yorumdaki eser “${artwork.title}” olarak değiştirildi.`, 'success');
   };
 
   const publicPayload = (item, order, options = {}) => {
@@ -351,6 +484,32 @@
   };
 
   document.addEventListener('click', async (event) => {
+    const pickerClose = event.target.closest('[data-admin-review-artwork-close]');
+    if (pickerClose) {
+      closeAdminArtworkPicker();
+      return;
+    }
+
+    const pickerChoice = event.target.closest('[data-admin-review-artwork-pick]');
+    if (pickerChoice) {
+      pickerChoice.disabled = true;
+      try {
+        await updateReviewArtwork(artworkPickerReviewId, pickerChoice.dataset.adminReviewArtworkPick);
+        closeAdminArtworkPicker();
+      } catch (error) {
+        console.error(error);
+        setNotice(`Eser değiştirilemedi: ${error.message}`, 'error');
+        pickerChoice.disabled = false;
+      }
+      return;
+    }
+
+    const artworkEdit = event.target.closest('[data-review-action="edit-artwork"]');
+    if (artworkEdit) {
+      openAdminArtworkPicker(artworkEdit.dataset.id, artworkEdit);
+      return;
+    }
+
     const filter = event.target.closest('[data-review-filter]');
     if (filter) {
       activeFilter = filter.dataset.reviewFilter;
@@ -406,13 +565,20 @@
     }
   });
 
+  $('[data-admin-review-artwork-search]')?.addEventListener('input', (event) => {
+    renderAdminArtworkPicker(event.target.value || '');
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && artworkPickerReviewId) closeAdminArtworkPicker();
+  });
+
   const app = getApp();
   if (!app || !firebase.auth || !firebase.firestore) return;
   firebase.auth().onAuthStateChanged((user) => {
     if (isAdmin(user)) { watchArtworks(); watch(); }
     else {
       if (unsubscribe) unsubscribe();
-      if (unsubscribeArtworks) unsubscribeArtworks();
       submissions = [];
       render();
     }
