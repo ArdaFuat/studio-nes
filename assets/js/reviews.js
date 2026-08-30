@@ -226,38 +226,41 @@
     if (artworksFirebaseLoaded && artworksUnsubscribe) return true;
     if (artworksLoadPromise) return artworksLoadPromise;
 
+    // reviews.js sayfada Firebase SDK'dan önce yüklenebiliyor. Firebase henüz hazır
+    // değilken Promise oluşturursak çözülmüş Promise değişkende kalıyor ve
+    // `ness:firebase-ready` geldiğinde gerçek Firestore sorgusu hiç başlamıyor.
+    // Önce hazır olup olmadığını kontrol ederek Firebase hazır olduğunda yeniden
+    // denenebilmesini garanti ediyoruz.
+    const app = getFirebaseApp();
+    if (!app || typeof firebase === 'undefined' || !firebase.firestore) return false;
+
     artworksLoadPromise = new Promise((resolve) => {
-      const app = getFirebaseApp();
-      if (!app || !firebase.firestore) {
+      let settled = false;
+      const finish = (result) => {
+        if (settled) return;
+        settled = true;
         artworksLoadPromise = null;
-        resolve(false);
-        return;
-      }
+        resolve(result);
+      };
 
       try {
         // orderBy kullanmıyoruz: Firestore'da `order` alanı olmayan yeni eserler
-        // orderBy sorgusunun dışında kalabildiği için koleksiyonun tamamını dinliyoruz.
+        // orderBy sorgusunun dışında kalabildiği için koleksiyonun TAMAMINI dinliyoruz.
         // Sıralama setArtworks içinde istemci tarafında yapılıyor.
         artworksUnsubscribe = firebase.firestore().collection(ARTWORKS_COLLECTION).onSnapshot((snapshot) => {
           const items = snapshot.docs.map((doc) => normalizeArtwork(doc.data(), doc.id));
           setArtworks(items);
-          const firstLoad = !artworksFirebaseLoaded;
           artworksFirebaseLoaded = true;
-          if (firstLoad) {
-            artworksLoadPromise = null;
-            resolve(true);
-          }
+          finish(true);
         }, (error) => {
           console.warn('Galerideki eserler okunamadı:', error);
           artworksUnsubscribe = null;
-          artworksLoadPromise = null;
-          resolve(false);
+          finish(false);
         });
       } catch (error) {
         console.warn('Galerideki eserler okunamadı:', error);
         artworksUnsubscribe = null;
-        artworksLoadPromise = null;
-        resolve(false);
+        finish(false);
       }
     });
 
