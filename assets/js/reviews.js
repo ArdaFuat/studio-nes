@@ -28,6 +28,7 @@
   let reviewsUnsubscribe = null;
   let artworksLoadPromise = null;
   let artworksFirebaseLoaded = false;
+  let artworksUnsubscribe = null;
   let reviewsCacheWriteScheduled = false;
   const reviewDateFormatter = new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
   const featuredMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -222,25 +223,43 @@
     const cachedItems = readCachedArtworks();
     const fallbackItems = typeof ARTWORKS !== 'undefined' && Array.isArray(ARTWORKS) ? ARTWORKS : [];
     if (!artworks.length) setArtworks(cachedItems.length ? cachedItems : fallbackItems);
-    if (artworksFirebaseLoaded) return true;
+    if (artworksFirebaseLoaded && artworksUnsubscribe) return true;
     if (artworksLoadPromise) return artworksLoadPromise;
 
-    artworksLoadPromise = (async () => {
+    artworksLoadPromise = new Promise((resolve) => {
       const app = getFirebaseApp();
-      if (!app || !firebase.firestore) return false;
+      if (!app || !firebase.firestore) {
+        artworksLoadPromise = null;
+        resolve(false);
+        return;
+      }
+
       try {
-        const snapshot = await firebase.firestore().collection(ARTWORKS_COLLECTION).orderBy('order', 'asc').get();
-        const items = snapshot.docs.map((doc) => normalizeArtwork(doc.data(), doc.id));
-        if (items.length) setArtworks(items);
-        artworksFirebaseLoaded = true;
-        return true;
+        // orderBy kullanmıyoruz: Firestore'da `order` alanı olmayan yeni eserler
+        // orderBy sorgusunun dışında kalabildiği için koleksiyonun tamamını dinliyoruz.
+        // Sıralama setArtworks içinde istemci tarafında yapılıyor.
+        artworksUnsubscribe = firebase.firestore().collection(ARTWORKS_COLLECTION).onSnapshot((snapshot) => {
+          const items = snapshot.docs.map((doc) => normalizeArtwork(doc.data(), doc.id));
+          setArtworks(items);
+          const firstLoad = !artworksFirebaseLoaded;
+          artworksFirebaseLoaded = true;
+          if (firstLoad) {
+            artworksLoadPromise = null;
+            resolve(true);
+          }
+        }, (error) => {
+          console.warn('Galerideki eserler okunamadı:', error);
+          artworksUnsubscribe = null;
+          artworksLoadPromise = null;
+          resolve(false);
+        });
       } catch (error) {
         console.warn('Galerideki eserler okunamadı:', error);
-        return false;
-      } finally {
+        artworksUnsubscribe = null;
         artworksLoadPromise = null;
+        resolve(false);
       }
-    })();
+    });
 
     return artworksLoadPromise;
   };

@@ -3946,39 +3946,80 @@ body.review-artwork-picker-open { overflow: hidden; }
   }
   .review-artwork-picker-dialog {
     width: 100%;
-    max-height: 88dvh;
-    border-radius: 27px 27px 0 0;
+    height: min(92dvh, 860px);
+    max-height: 92dvh;
+    grid-template-rows: auto auto minmax(0, 1fr);
+    border-radius: 24px 24px 0 0;
     border-bottom: 0;
     transform: translateY(28px);
   }
   .review-artwork-picker-modal.is-open .review-artwork-picker-dialog { transform: translateY(0); }
-  .review-artwork-picker-head { padding: 1.05rem 1rem .78rem; }
-  .review-artwork-picker-head h2 { font-size: clamp(1.55rem, 7.5vw, 2rem); }
-  .review-artwork-picker-head p:last-child { font-size: .79rem; }
-  .review-artwork-picker-close { width: 40px; height: 40px; }
-  .review-artwork-picker-tools { padding: 0 1rem .82rem; }
+  .review-artwork-picker-head {
+    gap: .7rem;
+    padding: max(1rem, env(safe-area-inset-top)) 1rem .72rem;
+  }
+  .review-artwork-picker-head h2 { font-size: clamp(1.42rem, 6.8vw, 1.9rem); line-height: 1.08; }
+  .review-artwork-picker-head p:last-child { margin-top: .34rem; font-size: .76rem; line-height: 1.35; }
+  .review-artwork-picker-kicker { margin-bottom: .22rem; font-size: .62rem; }
+  .review-artwork-picker-close { width: 38px; height: 38px; }
+  .review-artwork-picker-tools { padding: 0 1rem .72rem; }
+  .review-artwork-picker-search { border-radius: 13px; padding-inline: .72rem; }
+  .review-artwork-picker-search input { height: 42px; font-size: 16px; }
   .review-artwork-picker-count { display: none; }
   .review-artwork-picker-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: .68rem;
-    padding: .08rem 1rem calc(1rem + env(safe-area-inset-bottom));
+    align-content: start;
+    gap: .62rem;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: .06rem 1rem calc(1rem + env(safe-area-inset-bottom));
   }
   .review-artwork-picker-card {
-    grid-template-rows: clamp(132px, 40vw, 180px) auto;
-    border-radius: 18px;
+    grid-template-rows: auto auto;
+    align-self: start;
+    border-radius: 16px;
   }
-  .review-artwork-picker-card-copy { padding: .65rem .68rem .72rem; }
-  .review-artwork-picker-card-copy strong { font-size: .93rem; }
-  .review-artwork-picker-card-copy small { font-size: .66rem; }
+  .review-artwork-picker-card-image {
+    aspect-ratio: 1 / .82;
+    min-height: 0;
+  }
+  .review-artwork-picker-card-copy { padding: .62rem .65rem .68rem; }
+  .review-artwork-picker-card-copy strong {
+    font-size: .91rem;
+    line-height: 1.15;
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+  .review-artwork-picker-card-copy small { font-size: .65rem; }
+  .review-artwork-picker-card-check { top: 8px; right: 8px; width: 27px; height: 27px; }
 }
 
-@media (max-width: 390px) {
-  .review-artwork-picker-trigger { grid-template-columns: 54px minmax(0, 1fr); }
+@media (max-width: 430px) {
+  .review-artwork-picker-trigger {
+    grid-template-columns: 54px minmax(0, 1fr);
+    row-gap: .42rem;
+  }
   .review-artwork-picker-thumb { width: 54px; height: 54px; }
-  .review-artwork-picker-action { grid-column: 2; justify-self: start; margin-top: -.15rem; }
-  .review-artwork-picker-grid { gap: .55rem; padding-inline: .78rem; }
-  .review-artwork-picker-tools, .review-artwork-picker-head { padding-left: .78rem; padding-right: .78rem; }
-  .review-artwork-picker-card { grid-template-rows: 128px auto; }
+  .review-artwork-picker-action { grid-column: 2; justify-self: start; margin-top: -.1rem; }
+  .review-artwork-picker-grid { gap: .52rem; padding-left: .72rem; padding-right: .72rem; }
+  .review-artwork-picker-tools, .review-artwork-picker-head { padding-left: .72rem; padding-right: .72rem; }
+  .review-artwork-picker-card-copy { padding: .56rem .58rem .62rem; }
+  .review-artwork-picker-card-copy strong { font-size: .86rem; }
+  .review-artwork-picker-card-copy small { font-size: .61rem; }
+}
+
+@media (max-width: 350px) {
+  .review-artwork-picker-grid { grid-template-columns: 1fr; }
+  .review-artwork-picker-card-image { aspect-ratio: 16 / 10; }
+}
+
+@media (max-width: 760px) and (max-height: 700px) {
+  .review-artwork-picker-dialog { height: 96dvh; max-height: 96dvh; }
+  .review-artwork-picker-head { padding-top: .7rem; padding-bottom: .5rem; }
+  .review-artwork-picker-head p:last-child { display: none; }
+  .review-artwork-picker-tools { padding-bottom: .55rem; }
 }
 .review-artwork-picker-grid { grid-auto-rows: max-content; }
 
