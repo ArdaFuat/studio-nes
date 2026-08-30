@@ -23,6 +23,7 @@
   let featuredIndex = 0;
   let featuredTimer = null;
   let reviewModalReturnFocus = null;
+  let artworkPickerReturnFocus = null;
   let featuredClickSuppressedUntil = 0;
   let reviewsUnsubscribe = null;
   const featuredMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -141,6 +142,8 @@
     select.insertAdjacentHTML('beforeend', CITIES.map((city) => `<option value="${escapeHtml(city)}">${escapeHtml(city)}</option>`).join(''));
   };
 
+  const normalizeSearchText = (value = '') => String(value || '').toLocaleLowerCase('tr-TR').trim();
+
   const renderArtworkOptions = () => {
     const select = $('#reviewArtwork');
     if (!select) return;
@@ -151,12 +154,52 @@
     if (artworks.some((art) => art.id === currentValue)) select.value = currentValue;
   };
 
+  const renderArtworkPickerGrid = (query = '') => {
+    const grid = $('[data-artwork-picker-grid]');
+    const count = $('[data-artwork-picker-count]');
+    if (!grid) return;
+
+    const normalizedQuery = normalizeSearchText(query);
+    const visible = normalizedQuery
+      ? artworks.filter((art) => normalizeSearchText([art.title, art.technique, art.size, art.category].join(' ')).includes(normalizedQuery))
+      : artworks;
+
+    if (count) count.textContent = `${visible.length} eser`;
+    if (!visible.length) {
+      grid.innerHTML = `
+        <div class="review-artwork-picker-empty">
+          <span aria-hidden="true">✦</span>
+          <strong>${artworks.length ? 'Aramanızla eşleşen eser bulunamadı.' : 'Galeride gösterilecek eser bulunamadı.'}</strong>
+          <small>${artworks.length ? 'Başka bir eser adıyla aramayı deneyin.' : 'Ürünler yüklendiğinde burada görünecek.'}</small>
+        </div>`;
+      return;
+    }
+
+    grid.innerHTML = visible.map((art) => {
+      const isSelected = selectedArtwork?.id === art.id || $('#reviewArtwork')?.value === art.id;
+      const meta = [art.technique, art.size].filter(Boolean).join(' · ');
+      return `
+        <button class="review-artwork-picker-card${isSelected ? ' is-selected' : ''}" type="button" data-artwork-pick="${escapeHtml(art.id)}" aria-pressed="${isSelected ? 'true' : 'false'}">
+          <span class="review-artwork-picker-card-image">
+            <img src="${escapeHtml(art.image)}" alt="${escapeHtml(art.title)}" loading="lazy" decoding="async">
+            <span class="review-artwork-picker-card-check" aria-hidden="true">✓</span>
+          </span>
+          <span class="review-artwork-picker-card-copy">
+            <strong>${escapeHtml(art.title)}</strong>
+            <small>${escapeHtml(meta || 'Studio Nes eseri')}</small>
+          </span>
+        </button>`;
+    }).join('');
+  };
+
   const setArtworks = (items) => {
     artworks = (Array.isArray(items) ? items : [])
       .map((art) => normalizeArtwork(art, art.id))
       .filter((art) => !art.hidden)
       .sort((a, b) => a.order - b.order);
     renderArtworkOptions();
+    renderArtworkPreview();
+    renderArtworkPickerGrid($('[data-artwork-picker-search]')?.value || '');
   };
 
   const loadArtworks = async () => {
@@ -178,19 +221,43 @@
   };
 
   const renderArtworkPreview = () => {
-    const box = $('[data-review-product-preview]');
-    if (!box) return;
-    const id = $('#reviewArtwork')?.value || '';
+    const select = $('#reviewArtwork');
+    const trigger = $('[data-artwork-picker-open]');
+    if (!select || !trigger) return;
+
+    const id = select.value || '';
     selectedArtwork = artworks.find((art) => art.id === id) || null;
+
+    const image = $('[data-artwork-picker-thumb-image]');
+    const icon = $('[data-artwork-picker-thumb-icon]');
+    const eyebrow = $('[data-artwork-picker-eyebrow]');
+    const title = $('[data-artwork-picker-title]');
+    const meta = $('[data-artwork-picker-meta]');
+    const action = $('[data-artwork-picker-action]');
+
+    trigger.classList.toggle('is-selected', Boolean(selectedArtwork));
     if (!selectedArtwork) {
-      box.setAttribute('hidden', '');
-      box.innerHTML = '';
+      if (image) { image.setAttribute('hidden', ''); image.src = 'assets/img/ness-logo.png'; }
+      if (icon) icon.removeAttribute('hidden');
+      if (eyebrow) eyebrow.textContent = 'Studio Nes Galerisi';
+      if (title) title.textContent = 'Galeriden eser seç';
+      if (meta) meta.textContent = 'Görselleri ve eser adlarını birlikte görüntüleyin';
+      if (action) action.textContent = 'Seç';
+      trigger.setAttribute('aria-label', 'Galeriden satın aldığınız eseri seçin');
       return;
     }
-    box.innerHTML = `
-      <img src="${escapeHtml(selectedArtwork.image)}" alt="${escapeHtml(selectedArtwork.title)}">
-      <div><span>Seçilen eser</span><strong>${escapeHtml(selectedArtwork.title)}</strong><small>${escapeHtml([selectedArtwork.technique, selectedArtwork.size].filter(Boolean).join(' · '))}</small></div>`;
-    box.removeAttribute('hidden');
+
+    if (image) {
+      image.src = selectedArtwork.image;
+      image.alt = '';
+      image.removeAttribute('hidden');
+    }
+    if (icon) icon.setAttribute('hidden', '');
+    if (eyebrow) eyebrow.textContent = 'Seçilen eser';
+    if (title) title.textContent = selectedArtwork.title;
+    if (meta) meta.textContent = [selectedArtwork.technique, selectedArtwork.size].filter(Boolean).join(' · ') || 'Studio Nes eseri';
+    if (action) action.textContent = 'Değiştir';
+    trigger.setAttribute('aria-label', `${selectedArtwork.title} seçildi. Eseri değiştirmek için galeriyi açın.`);
   };
 
   const renderStars = (rating) => `<span class="review-card-stars" aria-label="5 üzerinden ${rating} yıldız">${'★'.repeat(rating)}${'☆'.repeat(5 - rating)}</span>`;
@@ -677,8 +744,81 @@
     });
   };
 
+  const openArtworkPicker = (trigger) => {
+    const modal = $('[data-artwork-picker-modal]');
+    if (!modal) return;
+    artworkPickerReturnFocus = trigger instanceof HTMLElement ? trigger : document.activeElement;
+    const search = $('[data-artwork-picker-search]');
+    if (search) search.value = '';
+    renderArtworkPickerGrid('');
+    modal.removeAttribute('hidden');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('review-artwork-picker-open');
+    window.requestAnimationFrame(() => {
+      modal.classList.add('is-open');
+      window.setTimeout(() => search?.focus(), 80);
+    });
+  };
+
+  const closeArtworkPicker = () => {
+    const modal = $('[data-artwork-picker-modal]');
+    if (!modal || modal.hasAttribute('hidden')) return;
+    modal.classList.remove('is-open');
+    modal.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('review-artwork-picker-open');
+    window.setTimeout(() => {
+      modal.setAttribute('hidden', '');
+      if (artworkPickerReturnFocus && typeof artworkPickerReturnFocus.focus === 'function') artworkPickerReturnFocus.focus();
+      artworkPickerReturnFocus = null;
+    }, 240);
+  };
+
+  const selectArtworkFromPicker = (id) => {
+    const select = $('#reviewArtwork');
+    const artwork = artworks.find((art) => art.id === String(id || ''));
+    if (!select || !artwork) return;
+    select.value = artwork.id;
+    renderArtworkPreview();
+    renderArtworkPickerGrid($('[data-artwork-picker-search]')?.value || '');
+    setFormStatus('', 'info');
+    closeArtworkPicker();
+  };
+
+  const setupArtworkPicker = () => {
+    const modal = $('[data-artwork-picker-modal]');
+    if (!modal) return;
+
+    document.addEventListener('click', (event) => {
+      const open = event.target.closest('[data-artwork-picker-open]');
+      if (open) {
+        openArtworkPicker(open);
+        return;
+      }
+      if (event.target.closest('[data-artwork-picker-close]')) {
+        closeArtworkPicker();
+        return;
+      }
+      const card = event.target.closest('[data-artwork-pick]');
+      if (card) selectArtworkFromPicker(card.dataset.artworkPick);
+    });
+
+    $('[data-artwork-picker-search]')?.addEventListener('input', (event) => {
+      renderArtworkPickerGrid(event.target.value);
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !modal.hasAttribute('hidden')) {
+        event.preventDefault();
+        closeArtworkPicker();
+      }
+    });
+  };
+
   const bindEvents = () => {
-    $('#reviewArtwork')?.addEventListener('change', renderArtworkPreview);
+    $('#reviewArtwork')?.addEventListener('change', () => {
+      renderArtworkPreview();
+      renderArtworkPickerGrid($('[data-artwork-picker-search]')?.value || '');
+    });
     $('[data-review-sort]')?.addEventListener('change', renderReviews);
     $('[data-review-form]')?.addEventListener('submit', submitReview);
     $('#reviewComment')?.addEventListener('input', (event) => {
@@ -696,6 +836,7 @@
     setupReviewDisclosure();
     setupFeaturedCarousel();
     setupReviewModal();
+    setupArtworkPicker();
     fillCities();
     bindEvents();
 

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Değerlendirmeler | Studio Nes</title>
   <meta name="description" content="Studio Nes eserlerini satın alanların değerlendirmelerini inceleyin veya satın aldığınız eser için yorumunuzu paylaşın." />
-  <link rel="stylesheet" href="assets/css/styles.css?v=performance-v2-20260807" />
+  <link rel="stylesheet" href="assets/css/styles.css?v=review-artwork-picker-20260830" />
   <link rel="icon" type="image/png" href="assets/img/favicon.png" />
   <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://firestore.googleapis.com">
@@ -84,13 +84,24 @@
             </select>
           </label>
 
-          <label>Satın aldığınız eser
-            <select id="reviewArtwork" name="artworkId" required>
+          <div class="review-artwork-field">
+            <span class="review-artwork-field-label">Satın aldığınız eser</span>
+            <select id="reviewArtwork" name="artworkId" class="review-artwork-native-select" tabindex="-1" aria-hidden="true">
               <option value="">Galeriden eser seçin</option>
             </select>
-          </label>
-
-          <div class="review-product-preview" data-review-product-preview hidden></div>
+            <button class="review-artwork-picker-trigger" type="button" data-artwork-picker-open aria-haspopup="dialog" aria-controls="reviewArtworkPicker">
+              <span class="review-artwork-picker-thumb" aria-hidden="true">
+                <img data-artwork-picker-thumb-image src="assets/img/ness-logo.png" alt="" hidden>
+                <span data-artwork-picker-thumb-icon>✦</span>
+              </span>
+              <span class="review-artwork-picker-copy">
+                <small data-artwork-picker-eyebrow>Studio Nes Galerisi</small>
+                <strong data-artwork-picker-title>Galeriden eser seç</strong>
+                <span data-artwork-picker-meta>Görselleri ve eser adlarını birlikte görüntüleyin</span>
+              </span>
+              <span class="review-artwork-picker-action" data-artwork-picker-action>Seç</span>
+            </button>
+          </div>
 
           <fieldset class="review-rating-fieldset">
             <legend>Puanınız</legend>
@@ -140,6 +151,33 @@
   </main>
 
 
+  <div class="review-artwork-picker-modal" id="reviewArtworkPicker" data-artwork-picker-modal hidden aria-hidden="true">
+    <button class="review-artwork-picker-backdrop" type="button" data-artwork-picker-close aria-label="Eser seçim panelini kapat"></button>
+    <section class="review-artwork-picker-dialog" role="dialog" aria-modal="true" aria-labelledby="reviewArtworkPickerTitle">
+      <header class="review-artwork-picker-head">
+        <div>
+          <p class="review-artwork-picker-kicker">Studio Nes Galerisi</p>
+          <h2 id="reviewArtworkPickerTitle">Satın aldığınız eseri seçin</h2>
+          <p>Görsele dokunarak ya da tıklayarak eseri yorumunuza ekleyebilirsiniz.</p>
+        </div>
+        <button class="review-artwork-picker-close" type="button" data-artwork-picker-close aria-label="Kapat"><span aria-hidden="true"></span></button>
+      </header>
+
+      <div class="review-artwork-picker-tools">
+        <label class="review-artwork-picker-search">
+          <span aria-hidden="true">⌕</span>
+          <input type="search" data-artwork-picker-search placeholder="Eser ara..." autocomplete="off" spellcheck="false">
+        </label>
+        <span class="review-artwork-picker-count" data-artwork-picker-count>0 eser</span>
+      </div>
+
+      <div class="review-artwork-picker-grid" data-artwork-picker-grid>
+        <div class="review-artwork-picker-loading">Galeri hazırlanıyor…</div>
+      </div>
+    </section>
+  </div>
+
+
   <div class="review-detail-modal" data-review-modal hidden aria-hidden="true">
     <button class="review-detail-backdrop" type="button" data-review-modal-close aria-label="Yorum penceresini kapat"></button>
     <section class="review-detail-dialog" role="dialog" aria-modal="true" aria-labelledby="reviewDetailTitle" aria-describedby="reviewDetailComment">
@@ -182,7 +220,7 @@
   <script src="assets/js/data.js?v=reviews-20260806-popup"></script>
   <script src="assets/js/slot-defaults.js?v=reviews-20260806-popup"></script>
   <script src="assets/js/mobile-fast-boot.js?v=mobile-speed-v2"></script>
-  <script src="assets/js/reviews.js?v=performance-v2-20260807"></script>
+  <script src="assets/js/reviews.js?v=review-artwork-picker-20260830"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
   <script src="assets/js/firebase-config.js?v=performance-v2-20260807"></script>
