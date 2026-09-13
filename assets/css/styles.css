@@ -4072,3 +4072,31 @@ body.review-artwork-picker-open { overflow: hidden; }
   .admin-review-art-wrap .admin-review-art { width: 92px; height: 92px; }
   .admin-review-art-edit { top: 5px; right: 5px; width: 28px; height: 28px; }
 }
+
+/* Ana sayfa — galeriden seçilen tablolar, kart sayısı ne olursa olsun merkezde kalır. */
+.art-grid[data-featured-grid] {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: stretch;
+  gap: 1.2rem;
+}
+.art-grid[data-featured-grid] > .art-card {
+  flex: 0 1 calc((100% - 3.6rem) / 4);
+  max-width: calc((100% - 3.6rem) / 4);
+  min-width: 0;
+}
+
+@media (max-width: 980px) {
+  .art-grid[data-featured-grid] > .art-card {
+    flex-basis: calc((100% - 1.2rem) / 2);
+    max-width: calc((100% - 1.2rem) / 2);
+  }
+}
+
+@media (max-width: 760px) {
+  .art-grid[data-featured-grid] > .art-card {
+    flex-basis: 100%;
+    max-width: 100%;
+  }
+}
