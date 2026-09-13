@@ -699,6 +699,7 @@ summary { cursor: pointer; font-weight: 900; color: var(--forest-900); }
   }
   .main-nav.open { opacity: 1; pointer-events: auto; transform: translateY(0); }
   .main-nav a { border-radius: 16px; }
+  .main-nav a.login-nav { justify-self: center; margin: .25rem auto 0; }
   .brand small { display: none; }
   .brand-wordmark { width: clamp(118px, 31vw, 148px); }
   .brand-wordmark-only .brand-wordmark { width: clamp(118px, 31vw, 148px); }
@@ -1643,6 +1644,7 @@ summary { cursor: pointer; font-weight: 900; color: var(--forest-900); }
   }
   .main-nav.open { opacity: 1; pointer-events: auto; transform: translateY(0); }
   .main-nav a { border-radius: 16px; }
+  .main-nav a.login-nav { justify-self: center; margin: .25rem auto 0; }
 }
 
 
