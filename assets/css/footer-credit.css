@@ -1,0 +1,15 @@
+/* Shared footer credit. Uses the existing Studio Nes palette. */
+.site-footer{align-items:center;gap:2rem}
+.site-footer .footer-meta{display:flex;flex-direction:column;align-items:flex-end;gap:.45rem;min-width:0}
+.site-footer .footer-copyright{font-size:.78rem;line-height:1.6;text-align:right;color:var(--muted,#687468);margin:0}
+.site-footer .footer-powered-by{display:flex;align-items:center;gap:.7rem;max-width:100%;line-height:1}
+.site-footer .footer-powered-by>span{font-size:.69rem;letter-spacing:.035em;font-weight:500;color:var(--muted,#687468);white-space:nowrap}
+.site-footer .footer-partner-logo{display:block;width:168px;height:auto;max-width:45vw;flex-shrink:1}
+@media(max-width:700px){
+  .site-footer{flex-direction:column;align-items:center;gap:1.3rem;text-align:center}
+  .site-footer .footer-brand{justify-items:center}
+  .site-footer .footer-meta{align-items:center;gap:.55rem}
+  .site-footer .footer-copyright{text-align:center;font-size:.72rem}
+  .site-footer .footer-powered-by{justify-content:center;gap:.6rem}
+  .site-footer .footer-partner-logo{width:156px;max-width:48vw}
+}

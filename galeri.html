@@ -9,6 +9,7 @@
   <link rel="icon" type="image/png" href="assets/img/favicon.png" />
   <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://firestore.googleapis.com">
+  <link rel="stylesheet" href="assets/css/footer-credit.css?v=20261029">
 </head>
 <body class="content-pending">
   <header class="site-header" data-header>
@@ -38,7 +39,19 @@
     <div class="dialog-body" data-dialog-body></div>
   </dialog>
 
-  <footer class="site-footer"><div class="footer-brand"><img class="footer-wordmark" src="assets/img/studio-nes-wordmark.png" alt="Studio Nes"><p data-content="footer.tagline">El yapımı akrilik tuval çalışmaları.</p></div><p>© <span data-year></span> <span data-content="footer.copyrightSuffix">Studio Nes. Tüm hakları saklıdır.</span></p></footer>
+  <footer class="site-footer" id="site-footer">
+    <div class="footer-brand">
+      <img class="footer-wordmark" src="assets/img/studio-nes-wordmark.png" alt="Studio Nes">
+      <p data-content="footer.tagline">El yapımı akrilik tuval çalışmaları.</p>
+    </div>
+    <div class="footer-meta">
+      <p class="footer-copyright">© <span data-year></span> Studio Nes. Tüm hakları saklıdır.</p>
+      <div class="footer-powered-by" aria-label="Powered by ARD Digital">
+        <span lang="en">Powered by</span>
+        <img class="footer-partner-logo" src="assets/img/ard-digital-forest.png" alt="ARD Digital" width="2169" height="725" decoding="async">
+      </div>
+    </div>
+  </footer>
   <script src="assets/js/data.js?v=catdedupe-20260704"></script>
   <script src="assets/js/mobile-fast-boot.js?v=mobile-speed-v2"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
